@@ -6,12 +6,18 @@
 
 int main(int argc, char *argv[])
 {
+    if (argc != 3)
+        return 0;
     BigBool* f = str_to_BigBool(argv[1]);
+    const char *before = BigBool_to_str(f);
 
-    BigBool* t = BigBool_shl(f, 3);
-    const char *str1 = BigBool_to_str(t);
+    BigBool* t = BigBool_shl(f, strtoul(argv[2], NULL, 10));
+    const char *after = BigBool_to_str(t);
 
-    puts(str1);
+    
+    printf("Before:\t %s\n", before);
+    printf("After:\t %s\n", after);
+
 
     return 0;
 }

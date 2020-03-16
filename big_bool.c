@@ -1,6 +1,5 @@
 #include "big_bool.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 char* BigBool_to_str(BigBool *bb)
@@ -200,6 +199,7 @@ BigBool* BigBool_shl(BigBool* bb, size_t shift)
     BigBool* sbb = calloc(1, sizeof(BigBool));
     if (sbb == NULL)
         return NULL;
+
     sbb->vector = calloc(bb->last_byte * 8 + (bb->last_bit > 0), sizeof(uint8_t));
     if (sbb->vector == NULL)
     {
@@ -210,28 +210,19 @@ BigBool* BigBool_shl(BigBool* bb, size_t shift)
     sbb->last_byte = bb->last_byte;
     sbb->last_bit = bb->last_bit;
 
-
     // Return empty vector (shift is bigger than vector size)
     if (shift >= bb->last_byte * 8 + bb->last_bit)
     {
         return sbb;
     }
 
-    // Shift bytes
-    for (size_t byte = byte_shift; byte < sbb->last_byte + (sbb->last_bit > 0); byte++)
-    {
-        sbb->vector[byte] = bb->vector[byte - byte_shift];
-    }
-
-    if (bit_shift == 0)
-        return sbb;
-
-    // Shift bits
+    // Shift bits and bytes
     uint8_t to_next_byte = 0;
     for (size_t byte = byte_shift; byte < sbb->last_byte + (sbb->last_bit > 0); byte++)
     {
-        sbb->vector[byte] = (bb->vector[byte] << bit_shift) | to_next_byte;
-        to_next_byte = bb->vector[byte] >> (8 - bit_shift);
+        uint8_t tmp_to_next_byte = bb->vector[byte - byte_shift] >> (8 - bit_shift);
+        sbb->vector[byte] = (bb->vector[byte - byte_shift] << bit_shift) | to_next_byte;
+        to_next_byte = tmp_to_next_byte;
     }
 
     return sbb;
@@ -239,6 +230,41 @@ BigBool* BigBool_shl(BigBool* bb, size_t shift)
 
 BigBool* BigBool_shr(BigBool* bb, size_t shift)
 {
-    return NULL;
-}
+    size_t byte_shift = shift / 8;
+    size_t bit_shift = shift % 8;
 
+    BigBool* sbb = calloc(1, sizeof(BigBool));
+    
+    if (sbb == NULL)
+    {
+        return NULL;
+    }
+
+    sbb->vector = calloc(bb->last_byte * 8 + (bb->last_bit > 0), sizeof(uint8_t));
+    if (sbb->vector == NULL)
+    {
+        free(sbb);
+        return NULL;
+    }
+
+    sbb->last_byte = bb->last_byte;
+    sbb->last_bit = bb->last_bit;
+
+    // Return empty vector (shift is bigger than vector size)
+    if (shift >= bb->last_byte * 8 + bb->last_bit)
+    {
+        return sbb;
+    }
+
+    // Shift bits and bytes
+    uint8_t to_next_byte = 0;
+    size_t last_not_empty_byte = sbb->last_byte + (sbb->last_bit > 0) - byte_shift - 1;
+    for (size_t byte = last_not_empty_byte + 1; byte > 0; byte--)
+    {
+        uint8_t tmp_to_next_byte = bb->vector[byte - 1 + byte_shift] << (8 - bit_shift);
+        sbb->vector[byte - 1] = (bb->vector[byte - 1 + byte_shift] >> bit_shift) | to_next_byte;
+        to_next_byte = tmp_to_next_byte;
+    }
+
+    return sbb;
+}
