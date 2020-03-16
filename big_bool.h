@@ -21,8 +21,8 @@ BigBool* BigBool_or(BigBool*, BigBool*);
 BigBool* BigBool_xor(BigBool*, BigBool*);
 BigBool* BigBool_shr(BigBool*, size_t);
 BigBool* BigBool_shl(BigBool*, size_t);
-// BigBool* BigBool_ror(BigBool*, size_t);
-// BigBool* BigBool_rol(BigBool*, size_t);
+BigBool* BigBool_ror(BigBool*, size_t);
+BigBool* BigBool_rol(BigBool*, size_t);
 BigBool* BigBool_not(BigBool*);
 
 #endif //BIG_BOOL_H
