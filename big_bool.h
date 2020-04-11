@@ -15,6 +15,10 @@ typedef struct _BigBool BigBool;
 char* BigBool_to_str(BigBool *);
 BigBool* str_to_BigBool(const char *);
 void BigBool_free(BigBool*);
+// TODO: BigBool* uint64_to_BigBool(uint64_t);
+
+BigBool* BigBool_random(size_t);
+void BigBool_srandom(size_t seed);
 
 BigBool* BigBool_and(BigBool*, BigBool*);
 BigBool* BigBool_or(BigBool*, BigBool*);

@@ -1,6 +1,44 @@
 #include "big_bool.h"
 
 #include <string.h>
+#include <stdlib.h>
+
+void BigBool_srandom(size_t seed)
+{
+    srand(seed);
+}
+
+BigBool* BigBool_random(size_t size)
+{
+    size_t last_bit = size % 8;
+    size_t last_byte = size / 8;
+
+    if (last_byte == 0 && last_bit == 0)
+    {
+        return NULL;
+    }
+
+    BigBool* bb = calloc(1, sizeof(BigBool));
+    if (bb == NULL)
+    {
+        return NULL;
+    }
+    bb->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
+    if (bb->vector == NULL)
+    {
+        free(bb);
+        return NULL;
+    }
+    bb->last_byte = last_byte;
+    bb->last_bit = last_bit;
+
+    for (size_t i = 0; i <= last_byte; i++)
+    {
+        bb->vector[i] = (uint8_t) rand();
+    }
+
+    return bb;
+}
 
 char* BigBool_to_str(BigBool *bb)
 {
