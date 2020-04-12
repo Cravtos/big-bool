@@ -12,17 +12,17 @@ struct _BigBool {
 
 typedef struct _BigBool BigBool;
 
-char* BigBool_to_str(BigBool *);
+BigBool* uint64_to_BigBool(uint64_t);   // Make BigBool from uint64 (e.g. 7 -> '111')
 BigBool* str_to_BigBool(const char *);
-void BigBool_free(BigBool*);
-// TODO: BigBool* uint64_to_BigBool(uint64_t);
+char* BigBool_to_str(BigBool *);
+void BigBool_free(BigBool*);            // Delete BigBool from memory
 
-BigBool* BigBool_random(size_t);
-void BigBool_srandom(size_t seed);
+void BigBool_srandom(size_t seed);  // Set random seed
+BigBool* BigBool_random(size_t);    // Generate random BigBool
 
 BigBool* BigBool_and(BigBool*, BigBool*);
-BigBool* BigBool_or(BigBool*, BigBool*);
 BigBool* BigBool_xor(BigBool*, BigBool*);
+BigBool* BigBool_or(BigBool*, BigBool*);
 BigBool* BigBool_shr(BigBool*, size_t);
 BigBool* BigBool_shl(BigBool*, size_t);
 BigBool* BigBool_ror(BigBool*, size_t);

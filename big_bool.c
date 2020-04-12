@@ -172,7 +172,7 @@ BigBool* BigBool_or(BigBool* f, BigBool* s)
 {
     // Make first BigBool >= than second
     if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BigBool_and(s, f);
+        return BigBool_or(s, f);
 
     BigBool* bb = calloc(1, sizeof(BigBool));
     if (bb == NULL)
@@ -203,7 +203,7 @@ BigBool* BigBool_xor(BigBool* f, BigBool* s)
 {
     // Make first BigBool >= than second
     if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BigBool_and(s, f);
+        return BigBool_xor(s, f);
 
     BigBool* bb = calloc(1, sizeof(BigBool));
     if (bb == NULL)
@@ -309,43 +309,24 @@ BigBool* BigBool_shr(BigBool* bb, size_t shift)
 
 BigBool* BigBool_ror(BigBool* bb, size_t shift)
 {
-    BigBool* sbb = calloc(1, sizeof(BigBool));
-    
-    if (sbb == NULL)
-    {
-        return NULL;
-    }
-
-    sbb->vector = calloc(bb->last_byte * 8 + (bb->last_bit > 0), sizeof(uint8_t));
-    if (sbb->vector == NULL)
-    {
-        free(sbb);
-        return NULL;
-    }
-
-    sbb->last_byte = bb->last_byte;
-    sbb->last_bit = bb->last_bit;
-
-    shift %= bb->last_byte * 8 + bb->last_bit;
-
-    size_t byte_shift = shift / 8;
-    size_t bit_shift = shift % 8;
-
-    // Shift bits and bytes
-    uint8_t to_next_byte = 0;
-    size_t last_byte = bb->last_byte + (bb->last_bit > 0);
-    for (size_t byte = last_byte + 1; byte > 0; byte--)
-    {
-        uint8_t tmp_to_prev_byte = bb->vector[(byte + byte_shift - 1) % last_byte] << (8 - bit_shift);
-        sbb->vector[byte - 1] = (bb->vector[(byte + byte_shift - 1) % last_byte] >> bit_shift);
-        sbb->vector[byte - 1] |= to_next_byte;
-        to_next_byte = tmp_to_prev_byte;
-    }
-
-    return sbb;
+    size_t size = bb->last_byte * 8 + bb->last_bit;
+    shift %= size;
+    BigBool* op1 = BigBool_shr(bb, shift);
+    BigBool* op2 = BigBool_shl(bb, size - shift);
+    BigBool* ror = BigBool_or(op1, op2);
+    BigBool_free(op1);
+    BigBool_free(op2);
+    return ror;
 }
 
 BigBool* BigBool_rol(BigBool* bb, size_t shift)
 {
-    return NULL;
+    size_t size = bb->last_byte * 8 + bb->last_bit;
+    shift %= size;
+    BigBool* op1 = BigBool_shl(bb, shift);
+    BigBool* op2 = BigBool_shr(bb, size - shift);
+    BigBool* rol = BigBool_or(op1, op2);
+    BigBool_free(op1);
+    BigBool_free(op2);
+    return rol;
 }

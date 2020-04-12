@@ -18,13 +18,18 @@ int main(int argc, char *argv[])
     BigBool* bb_or = BigBool_or(bb1, bb2);
     BigBool* bb_not = BigBool_not(bb1);
     BigBool* bb_shl = BigBool_shl(bb1, 3);
-    BigBool* bb_shr = BigBool_shr(bb2, 3);
+    BigBool* bb_shr = BigBool_shr(bb1, 4);
+    BigBool* bb_rol = BigBool_rol(bb1, 5);
+    BigBool* bb_ror = BigBool_ror(bb1, 7);
+
 
     printf("AND\t%s\n", BigBool_to_str(bb_and));
     printf("OR\t%s\n", BigBool_to_str(bb_or));
     printf("XOR\t%s\n", BigBool_to_str(bb_xor));
-    printf("NOTBB1\t%s\n", BigBool_to_str(bb_not));
-    printf("SHL3BB1\t%s\n", BigBool_to_str(bb_shl));
-    printf("SHR3BB2\t%s\n", BigBool_to_str(bb_shr));
+    printf("NOT\t%s\n", BigBool_to_str(bb_not));
+    printf("SHL3\t%s\n", BigBool_to_str(bb_shl));
+    printf("SHR4\t%s\n", BigBool_to_str(bb_shr));
+    printf("ROL5\t%s\n", BigBool_to_str(bb_rol));
+    printf("ROR7\t%s\n", BigBool_to_str(bb_ror));
     return 0;
 }
