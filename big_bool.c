@@ -3,6 +3,35 @@
 #include <string.h>
 #include <stdlib.h>
 
+BigBool* uint64_to_BigBool(uint64_t number)
+{
+    size_t last_bit = 0;
+    size_t last_byte = 8;
+
+    BigBool* bb = calloc(1, sizeof(BigBool));
+    if (bb == NULL)
+    {
+        return NULL;
+    }
+    bb->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
+    if (bb->vector == NULL)
+    {
+        free(bb);
+        return NULL;
+    }
+    bb->last_byte = last_byte;
+    bb->last_bit = last_bit;
+
+
+    for (size_t byte = 0; byte < last_byte; byte++)
+    {
+        bb->vector[byte] |= number; // % 256
+        number >>= 8u;
+    }
+
+    return bb;
+}
+
 void BigBool_srandom(size_t seed)
 {
     srand(seed);

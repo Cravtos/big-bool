@@ -21,8 +21,9 @@ int main(int argc, char *argv[])
     BigBool* bb_shr = BigBool_shr(bb1, 4);
     BigBool* bb_rol = BigBool_rol(bb1, 5);
     BigBool* bb_ror = BigBool_ror(bb1, 7);
+    BigBool* from_number = uint64_to_BigBool(5817984712);
 
-
+    // Memory leak here. Not how should be used
     printf("AND\t%s\n", BigBool_to_str(bb_and));
     printf("OR\t%s\n", BigBool_to_str(bb_or));
     printf("XOR\t%s\n", BigBool_to_str(bb_xor));
@@ -31,5 +32,6 @@ int main(int argc, char *argv[])
     printf("SHR4\t%s\n", BigBool_to_str(bb_shr));
     printf("ROL5\t%s\n", BigBool_to_str(bb_rol));
     printf("ROR7\t%s\n", BigBool_to_str(bb_ror));
+    printf("From Number\t%s\n", BigBool_to_str(from_number));
     return 0;
 }
