@@ -3,26 +3,26 @@ ___
 
 ##Implemented functions:
 ```c
-    BigBool* str_to_BigBool(const char *);
-    BigBool* uint64_to_BigBool(uint64_t);
-    char* BigBool_to_str(BigBool *);
-    void BigBool_free(BigBool*);
+    BB* BB_from_str(const char *);
+    BB* BB_from_uint64(uint64_t);
+    char* BB_to_str(BB *);
+    void BB_free(BB*);
 
-    BigBool* BigBool_srandom(size_t);
-    BigBool* BigBool_random(size_t);
+    BB* BB_srandom(size_t);
+    BB* BB_random(size_t);
     
-    BigBool* BigBool_and(BigBool*, BigBool*);
-    BigBool* BigBool_xor(BigBool*, BigBool*);
-    BigBool* BigBool_or(BigBool*, BigBool*);
-    BigBool* BigBool_shr(BigBool*, size_t);
-    BigBool* BigBool_shl(BigBool*, size_t);
-    BigBool* BigBool_ror(BigBool*, size_t);
-    BigBool* BigBool_rol(BigBool*, size_t);
-    BigBool* BigBool_not(BigBool*);
+    BB* BB_and(BB*, BB*);
+    BB* BB_xor(BB*, BB*);
+    BB* BB_or(BB*, BB*);
+    BB* BB_shr(BB*, size_t);
+    BB* BB_shl(BB*, size_t);
+    BB* BB_ror(BB*, size_t);
+    BB* BB_rol(BB*, size_t);
+    BB* BB_not(BB*);
 ```
 
 ###TODO:
-1) Convenient function names
+1) <s>Convenient function names</s>
 2) Trim leading zeros in BB in order to save memory
 3) Solve the problem with the ease of memory leakage. <br> 
 **(thoughts: change functions to put result in first argument <br> 
