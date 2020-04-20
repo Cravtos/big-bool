@@ -1,7 +1,7 @@
-#Big boolean vector library
+# Big boolean vector library
 ___
 
-##Implemented functions:
+## Implemented functions:
 ```c
     BB* BB_from_str(const char *);
     BB* BB_from_uint64(uint64_t);
@@ -21,7 +21,7 @@ ___
     BB* BB_not(BB*);
 ```
 
-###TODO:
+### TODO:
 1) <s>Convenient function names</s>
 2) Trim leading zeros in BB in order to save memory
 3) Solve the problem with the ease of memory leakage. <br> 
