@@ -3,12 +3,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-BigBool* uint64_to_BigBool(uint64_t number)
+BB* BB_from_uint64(uint64_t number)
 {
     size_t last_bit = 0;
     size_t last_byte = 8;
 
-    BigBool* bb = calloc(1, sizeof(BigBool));
+    BB* bb = calloc(1, sizeof(BB));
     if (bb == NULL)
     {
         return NULL;
@@ -32,12 +32,12 @@ BigBool* uint64_to_BigBool(uint64_t number)
     return bb;
 }
 
-void BigBool_srandom(size_t seed)
+void BB_srandom(size_t seed)
 {
     srand(seed);
 }
 
-BigBool* BigBool_random(size_t size)
+BB* BB_random(size_t size)
 {
     size_t last_bit = size % 8;
     size_t last_byte = size / 8;
@@ -47,7 +47,7 @@ BigBool* BigBool_random(size_t size)
         return NULL;
     }
 
-    BigBool* bb = calloc(1, sizeof(BigBool));
+    BB* bb = calloc(1, sizeof(BB));
     if (bb == NULL)
     {
         return NULL;
@@ -69,7 +69,7 @@ BigBool* BigBool_random(size_t size)
     return bb;
 }
 
-char* BigBool_to_str(BigBool *bb)
+char* BB_to_str(BB *bb)
 {
     size_t last_byte = bb->last_byte;
     size_t last_bit = bb->last_bit;
@@ -95,7 +95,7 @@ char* BigBool_to_str(BigBool *bb)
     return str;
 }
 
-BigBool* str_to_BigBool(const char *str)
+BB* str_to_BB(const char *str)
 {
     size_t len = strlen(str);
     size_t last_bit = len % 8;
@@ -110,7 +110,7 @@ BigBool* str_to_BigBool(const char *str)
         if (str[i] != '0' && str[i] != '1')
             return NULL;
 
-    BigBool* bb = calloc(1, sizeof(BigBool));
+    BB* bb = calloc(1, sizeof(BB));
     if (bb == NULL)
     {
         return NULL;
@@ -141,15 +141,15 @@ BigBool* str_to_BigBool(const char *str)
     return bb;
 }
 
-void BigBool_free(BigBool* bb)
+void BB_free(BB* bb)
 {
     free(bb->vector);
     free(bb);
 }
 
-BigBool* BigBool_not(BigBool* bb)
+BB* BB_not(BB* bb)
 {
-    BigBool* nbb = calloc(1, sizeof(BigBool));
+    BB* nbb = calloc(1, sizeof(BB));
     if (nbb == NULL)
         return NULL;
     nbb->vector = calloc(bb->last_byte + (bb->last_bit > 0), sizeof(uint8_t));
@@ -170,13 +170,13 @@ BigBool* BigBool_not(BigBool* bb)
 }
 
 
-BigBool* BigBool_and(BigBool* f, BigBool* s)
+BB* BB_and(BB* f, BB* s)
 {
     // Make first BigBool >= than second
     if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BigBool_and(s, f);
+        return BB_and(s, f);
 
-    BigBool* bb = calloc(1, sizeof(BigBool));
+    BB* bb = calloc(1, sizeof(BB));
     if (bb == NULL)
         return NULL;
     bb->vector = calloc(f->last_byte + (f->last_bit > 0), sizeof(uint8_t));
@@ -197,13 +197,13 @@ BigBool* BigBool_and(BigBool* f, BigBool* s)
     return bb;
 }
 
-BigBool* BigBool_or(BigBool* f, BigBool* s)
+BB* BB_or(BB* f, BB* s)
 {
     // Make first BigBool >= than second
     if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BigBool_or(s, f);
+        return BB_or(s, f);
 
-    BigBool* bb = calloc(1, sizeof(BigBool));
+    BB* bb = calloc(1, sizeof(BB));
     if (bb == NULL)
         return NULL;
     bb->vector = calloc(f->last_byte + (f->last_bit > 0), sizeof(uint8_t));
@@ -228,13 +228,13 @@ BigBool* BigBool_or(BigBool* f, BigBool* s)
     return bb;
 }
 
-BigBool* BigBool_xor(BigBool* f, BigBool* s)
+BB* BB_xor(BB* f, BB* s)
 {
     // Make first BigBool >= than second
     if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BigBool_xor(s, f);
+        return BB_xor(s, f);
 
-    BigBool* bb = calloc(1, sizeof(BigBool));
+    BB* bb = calloc(1, sizeof(BB));
     if (bb == NULL)
         return NULL;
     bb->vector = calloc(f->last_byte + (f->last_bit > 0), sizeof(uint8_t));
@@ -258,12 +258,12 @@ BigBool* BigBool_xor(BigBool* f, BigBool* s)
     return bb;
 }
 
-BigBool* BigBool_shl(BigBool* bb, size_t shift)
+BB* BB_shl(BB* bb, size_t shift)
 {
     size_t byte_shift = shift / 8;
     size_t bit_shift = shift % 8;
 
-    BigBool* sbb = calloc(1, sizeof(BigBool));
+    BB* sbb = calloc(1, sizeof(BB));
     if (sbb == NULL)
         return NULL;
 
@@ -295,12 +295,12 @@ BigBool* BigBool_shl(BigBool* bb, size_t shift)
     return sbb;
 }
 
-BigBool* BigBool_shr(BigBool* bb, size_t shift)
+BB* BB_shr(BB* bb, size_t shift)
 {
     size_t byte_shift = shift / 8;
     size_t bit_shift = shift % 8;
 
-    BigBool* sbb = calloc(1, sizeof(BigBool));
+    BB* sbb = calloc(1, sizeof(BB));
     
     if (sbb == NULL)
     {
@@ -336,26 +336,26 @@ BigBool* BigBool_shr(BigBool* bb, size_t shift)
     return sbb;
 }
 
-BigBool* BigBool_ror(BigBool* bb, size_t shift)
+BB* BB_ror(BB* bb, size_t shift)
 {
     size_t size = bb->last_byte * 8 + bb->last_bit;
     shift %= size;
-    BigBool* op1 = BigBool_shr(bb, shift);
-    BigBool* op2 = BigBool_shl(bb, size - shift);
-    BigBool* ror = BigBool_or(op1, op2);
-    BigBool_free(op1);
-    BigBool_free(op2);
+    BB* op1 = BB_shr(bb, shift);
+    BB* op2 = BB_shl(bb, size - shift);
+    BB* ror = BB_or(op1, op2);
+    BB_free(op1);
+    BB_free(op2);
     return ror;
 }
 
-BigBool* BigBool_rol(BigBool* bb, size_t shift)
+BB* BB_rol(BB* bb, size_t shift)
 {
     size_t size = bb->last_byte * 8 + bb->last_bit;
     shift %= size;
-    BigBool* op1 = BigBool_shl(bb, shift);
-    BigBool* op2 = BigBool_shr(bb, size - shift);
-    BigBool* rol = BigBool_or(op1, op2);
-    BigBool_free(op1);
-    BigBool_free(op2);
+    BB* op1 = BB_shl(bb, shift);
+    BB* op2 = BB_shr(bb, size - shift);
+    BB* rol = BB_or(op1, op2);
+    BB_free(op1);
+    BB_free(op2);
     return rol;
 }

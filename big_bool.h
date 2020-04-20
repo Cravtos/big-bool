@@ -4,29 +4,29 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-struct _BigBool {
+struct _BB {
     uint8_t* vector;
     size_t last_byte;   // Last accessible byte in vector
     size_t last_bit;    // Amount of bits
 };
 
-typedef struct _BigBool BigBool;
+typedef struct _BB BB;
 
-BigBool* uint64_to_BigBool(uint64_t);   // Make BigBool from uint64 (e.g. 7 -> '111')
-BigBool* str_to_BigBool(const char *);
-char* BigBool_to_str(BigBool *);
-void BigBool_free(BigBool*);            // Delete BigBool from memory
+BB* BB_from_uint64(uint64_t);   // Make BigBool from uint64 (e.g. 7 -> '111')
+BB* BB_from_str(const char *);
+char* BB_to_str(BB *);
+void BB_free(BB*);            // Delete BigBool from memory
 
-void BigBool_srandom(size_t seed);  // Set random seed
-BigBool* BigBool_random(size_t);    // Generate random BigBool
+void BB_srandom(size_t seed);  // Set random seed
+BB* BB_random(size_t);    // Generate random BigBool
 
-BigBool* BigBool_and(BigBool*, BigBool*);
-BigBool* BigBool_xor(BigBool*, BigBool*);
-BigBool* BigBool_or(BigBool*, BigBool*);
-BigBool* BigBool_shr(BigBool*, size_t);
-BigBool* BigBool_shl(BigBool*, size_t);
-BigBool* BigBool_ror(BigBool*, size_t);
-BigBool* BigBool_rol(BigBool*, size_t);
-BigBool* BigBool_not(BigBool*);
+BB* BB_and(BB*, BB*);
+BB* BB_xor(BB*, BB*);
+BB* BB_or(BB*, BB*);
+BB* BB_shr(BB*, size_t);
+BB* BB_shl(BB*, size_t);
+BB* BB_ror(BB*, size_t);
+BB* BB_rol(BB*, size_t);
+BB* BB_not(BB*);
 
 #endif //BIG_BOOL_H
