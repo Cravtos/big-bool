@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define FAIL 0
+#define OK 1
+
 struct _BB {
     uint8_t* vector;
     size_t last_byte;   // Last accessible byte in vector
@@ -12,21 +15,26 @@ struct _BB {
 
 typedef struct _BB BB;
 
-BB* BB_from_uint64(uint64_t);   // Make BigBool from uint64 (e.g. 7 -> '111')
-BB* BB_from_str(const char *);
-char* BB_to_str(BB *);
-void BB_free(BB*);            // Delete BigBool from memory
+// TODO: Try to recall why did you use double pointer everywhere.
 
-void BB_srandom(size_t seed);  // Set random seed
-BB* BB_random(size_t);    // Generate random BigBool
+int BB_from_str(BB** r, const char *str);
+int BB_from_uint64(BB** r, uint64_t number);     // Make BigBool from uint64 (e.g. 7 -> '111')
+int BB_zero(BB** r, size_t size);
+char* BB_to_str(BB* a);
+int BB_copy(BB** to, BB* from);
+void BB_free(BB* a);                     // Delete BigBool from memory
 
-BB* BB_and(BB*, BB*);
-BB* BB_xor(BB*, BB*);
-BB* BB_or(BB*, BB*);
-BB* BB_shr(BB*, size_t);
-BB* BB_shl(BB*, size_t);
-BB* BB_ror(BB*, size_t);
-BB* BB_rol(BB*, size_t);
-BB* BB_not(BB*);
+void BB_srandom(size_t seed);            // Set random seed
+int BB_random(BB** r, size_t size);              // Generate random BigBool
+
+// Functions below return OK (1) on success, FAIL (0) on fail.
+int BB_shr(BB** r, BB* a, size_t n);
+int BB_shl(BB** r, BB* a, size_t n);
+int BB_ror(BB** r, BB* a, size_t n);
+int BB_rol(BB** r, BB* a, size_t n);
+int BB_and(BB** r, BB* a, BB* b);
+int BB_xor(BB** r, BB* a, BB* b);
+int BB_or(BB** r, BB* a, BB* b);
+int BB_not(BB** r, BB* a);
 
 #endif //BIG_BOOL_H

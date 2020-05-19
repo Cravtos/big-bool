@@ -3,79 +3,114 @@
 #include <string.h>
 #include <stdlib.h>
 
-BB* BB_from_uint64(uint64_t number)
+
+// TODO: Trim leading zeros.
+// Create vector from number
+int BB_from_uint64(BB** r, uint64_t number)
 {
-    size_t last_bit = 0;
-    size_t last_byte = 8;
-
-    BB* bb = calloc(1, sizeof(BB));
-    if (bb == NULL)
+    if (r == NULL)
     {
-        return NULL;
+        return FAIL;
     }
-    bb->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
-    if (bb->vector == NULL)
+
+    if ((*r) != NULL)
     {
-        free(bb);
-        return NULL;
+        BB_free((*r));
     }
-    bb->last_byte = last_byte;
-    bb->last_bit = last_bit;
 
+    BB_zero(r, sizeof(uint64_t) * 8);
+    if ((*r) == NULL)
+        return FAIL;
 
-    for (size_t byte = 0; byte < last_byte; byte++)
+    for (size_t byte = 0; byte < (*r)->last_byte; byte++)
     {
-        bb->vector[byte] |= number; // % 256
+        (*r)->vector[byte] |= number; // % 256
         number >>= 8u;
     }
 
-    return bb;
+    return OK;
 }
 
+// Specifies seed for random.
 void BB_srandom(size_t seed)
 {
     srand(seed);
 }
 
-BB* BB_random(size_t size)
+// Creates random vector.
+int BB_random(BB** r, size_t size)
 {
-    size_t last_bit = size % 8;
-    size_t last_byte = size / 8;
-
-    if (last_byte == 0 && last_bit == 0)
+    if (r == NULL)
     {
-        return NULL;
+        return FAIL;
     }
 
-    BB* bb = calloc(1, sizeof(BB));
-    if (bb == NULL)
+    if ((*r) != NULL)
     {
-        return NULL;
-    }
-    bb->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
-    if (bb->vector == NULL)
-    {
-        free(bb);
-        return NULL;
-    }
-    bb->last_byte = last_byte;
-    bb->last_bit = last_bit;
-
-    for (size_t i = 0; i <= last_byte; i++)
-    {
-        bb->vector[i] = (uint8_t) rand();
+        BB_free(*r);
     }
 
-    return bb;
+    BB_zero(r, size);
+
+    if ((*r) == NULL)
+        return FAIL;
+
+    for (size_t i = 0; i <= (*r)->last_byte; i++)
+    {
+        (*r)->vector[i] = (uint8_t) rand();
+    }
+
+    return OK;
 }
 
-char* BB_to_str(BB *bb)
+// Creates vector filled with zeros.
+int BB_zero(BB** r, size_t size)
 {
-    size_t last_byte = bb->last_byte;
-    size_t last_bit = bb->last_bit;
-    size_t len = last_byte * 8 + last_bit;
+    if (r == NULL)
+    {
+        return FAIL;
+    }
 
-    char *str = calloc(len + 1, sizeof(char));
+    if ((*r) != NULL)
+    {
+        BB_free(*r);
+    }
+
+    if (size == 0)
+    {
+        (*r) = NULL;
+        return OK;
+    }
+
+    size_t last_byte = size / 8;
+    size_t last_bit = size % 8;
+
+    (*r) = calloc(1, sizeof(BB));
+    if ((*r) == NULL)
+        return FAIL;
+
+    (*r)->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
+
+    if ((*r)->vector == NULL)
+    {
+        BB_free((*r));
+        return FAIL;
+    }
+
+    (*r)->last_byte = last_byte;
+    (*r)->last_bit = last_bit;
+
+    return OK;
+}
+
+// Converts vector to string.
+char* BB_to_str(BB *a)
+{
+    size_t last_byte = a->last_byte;
+    size_t last_bit = a->last_bit;
+    size_t size = last_byte * 8 + last_bit;
+
+    char *str = calloc(size + 1, sizeof(char));
     if (str == NULL)
         return NULL;
 
@@ -83,279 +118,272 @@ char* BB_to_str(BB *bb)
     {
         for (size_t bit = 0; bit < 8; bit++)
         {
-            str[len - (byte * 8 + bit + 1)] = ((bb->vector[byte] >> bit) & 1) + '0';
+            str[size - (byte * 8 + bit + 1)] = ((a->vector[byte] >> bit) & 1) + '0';
         }
     }
 
     for (size_t bit = 0; bit < last_bit; bit++)
     {
-        str[len - (last_byte * 8 + bit + 1)] = ((bb->vector[last_byte] >> bit) & 1) + '0';
+        str[size - (last_byte * 8 + bit + 1)] = ((a->vector[last_byte] >> bit) & 1) + '0';
     }
 
     return str;
 }
 
-BB* str_to_BB(const char *str)
+// Creates vector from string.
+int BB_from_str(BB** r, const char *str)
 {
-    size_t len = strlen(str);
-    size_t last_bit = len % 8;
-    size_t last_byte = len / 8;
-
-    if (last_byte == 0 && last_bit == 0)
+    if (r == NULL)
     {
-        return NULL;
+        return FAIL;
     }
+
+    if ((*r) != NULL)
+    {
+        BB_free(*r);
+    }
+
+    size_t len = strlen(str);
 
     for (size_t i = 0; i < len; i++)
         if (str[i] != '0' && str[i] != '1')
-            return NULL;
+            return FAIL;
 
-    BB* bb = calloc(1, sizeof(BB));
-    if (bb == NULL)
-    {
-        return NULL;
-    }
-    bb->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
-    if (bb->vector == NULL)
-    {
-        free(bb);
-        return NULL;
-    }
-    bb->last_byte = last_byte;
-    bb->last_bit = last_bit;
+    BB_zero(r, len);
+    if ((*r) == NULL)
+        return FAIL;
 
+    size_t last_byte = (*r)->last_byte;
+    size_t last_bit = (*r)->last_bit;
 
     for (size_t byte = 0; byte < last_byte; byte++)
     {
         for (size_t bit = 0; bit < 8; bit++)
         {
-            bb->vector[byte] |= (str[len - (byte * 8 + bit + 1)] - '0') << bit;
+            (*r)->vector[byte] |= (str[len - (byte * 8 + bit + 1)] - '0') << bit; // TODO: Check (unsigned) thing.
         }
     }
 
     for (size_t bit = 0; bit < last_bit; bit++)
     {
-        bb->vector[last_byte] |= (str[len - (last_byte * 8 + bit + 1)] - '0') << bit;
+        (*r)->vector[last_byte] |= (str[len - (last_byte * 8 + bit + 1)] - '0') << bit;
     }
 
-    return bb;
+    return OK;
 }
 
-void BB_free(BB* bb)
+// TODO: Finish copy function.
+int BB_copy(BB** to, BB* from)
 {
-    free(bb->vector);
-    free(bb);
+    if (to == NULL)
+    {
+        return FAIL;
+    }
+
+    if ((*to) == from)
+    {
+        return OK;
+    }
+
+    if ((*to) != NULL)
+    {
+        BB_free((*to));
+    }
+
+    (*to) = calloc(1, sizeof(BB));
+    if ((*to) == NULL)
+    {
+        return FAIL;
+    }
+
+    (*to)->last_byte = from->last_byte;
+    (*to)->last_bit = from->last_bit;
+    memcpy((*to)->vector, from->vector, from->last_byte + (from->last_bit > 0));
+
+    return OK;
 }
 
-BB* BB_not(BB* bb)
+// Frees vector from memory.
+void BB_free(BB* a)
 {
-    BB* nbb = calloc(1, sizeof(BB));
-    if (nbb == NULL)
-        return NULL;
-    nbb->vector = calloc(bb->last_byte + (bb->last_bit > 0), sizeof(uint8_t));
-    if (nbb->vector == NULL)
-    {
-        free(nbb);
-        return NULL;
-    }
-    nbb->last_byte = bb->last_byte;
-    nbb->last_bit = bb->last_bit;
-
-    for (size_t byte = 0; byte <= bb->last_byte; byte++)
-    {
-        nbb->vector[byte] = ~bb->vector[byte];
-    }
-
-    return nbb;
+    free(a->vector);
+    free(a);
 }
 
-
-BB* BB_and(BB* f, BB* s)
+/*
+ * Check if (r == a), (r == NULL) or (r != a) and:
+ * If (r == a) -- leave @r unchanged
+ * Else -- free @r and point it to new BB
+ * Return FAIL if new BB failed to allocate.
+ */
+int handle_args(BB** r, BB* a)
 {
-    // Make first BigBool >= than second
-    if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BB_and(s, f);
-
-    BB* bb = calloc(1, sizeof(BB));
-    if (bb == NULL)
-        return NULL;
-    bb->vector = calloc(f->last_byte + (f->last_bit > 0), sizeof(uint8_t));
-    if (bb->vector == NULL)
+    int status = OK;
+    if (*r != a)
     {
-        free(bb);
-        return NULL;
+        if (*r != NULL)
+            BB_free(*r);
+
+        size_t size = a->last_byte * 8 + a->last_bit;
+        status = BB_zero(r, size);
     }
-
-    bb->last_byte = f->last_byte;
-    bb->last_bit = f->last_bit;
-
-    for (size_t byte = 0; byte <= s->last_byte; byte++)
-    {
-        bb->vector[byte] = f->vector[byte] & s->vector[byte];
-    }
-
-    return bb;
+    return status;
 }
 
-BB* BB_or(BB* f, BB* s)
+// Operation NOT (~)
+int BB_not(BB** r, BB* a)
 {
-    // Make first BigBool >= than second
-    if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BB_or(s, f);
+    if (handle_args(r, a) == FAIL)
+        return FAIL;
 
-    BB* bb = calloc(1, sizeof(BB));
-    if (bb == NULL)
-        return NULL;
-    bb->vector = calloc(f->last_byte + (f->last_bit > 0), sizeof(uint8_t));
-    if (bb->vector == NULL)
+    for (size_t byte = 0; byte <= a->last_byte; byte++)
     {
-        free(bb);
-        return NULL;
-    }
-    bb->last_byte = f->last_byte;
-    bb->last_bit = f->last_bit;
-
-    for (size_t byte = 0; byte <= s->last_byte; byte++)
-    {
-        bb->vector[byte] = f->vector[byte] | s->vector[byte];
+        (*r)->vector[byte] = ~a->vector[byte];
     }
 
-    for (size_t byte = s->last_byte + 1; byte <= f->last_byte; byte++)
-    {
-        bb->vector[byte] = f->vector[byte];
-    }
-
-    return bb;
+    return OK;
 }
 
-BB* BB_xor(BB* f, BB* s)
+
+// Operation AND (&)
+int BB_and(BB** r, BB* a, BB* b)
 {
     // Make first BigBool >= than second
-    if ((f->last_byte * 8 + f->last_bit) < (s->last_byte * 8 + s->last_bit))
-        return BB_xor(s, f);
+    if ((a->last_byte * 8 + a->last_bit) < (b->last_byte * 8 + b->last_bit))
+        return BB_and(r, b, a);
 
-    BB* bb = calloc(1, sizeof(BB));
-    if (bb == NULL)
-        return NULL;
-    bb->vector = calloc(f->last_byte + (f->last_bit > 0), sizeof(uint8_t));
-    if (bb->vector == NULL)
-    {
-        free(bb);
-        return NULL;
-    }
-    bb->last_byte = f->last_byte;
-    bb->last_bit = f->last_bit;
+    if (handle_args(r, a) == FAIL)
+        return FAIL;
 
-    for (size_t byte = 0; byte <= s->last_byte; byte++)
+    for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
-        bb->vector[byte] = f->vector[byte] ^ s->vector[byte];
-    }
-    for (size_t byte = s->last_byte + 1; byte <= f->last_byte; byte++)
-    {
-        bb->vector[byte] = f->vector[byte] ^ (uint8_t) 0;
+        (*r)->vector[byte] = a->vector[byte] & b->vector[byte];
     }
 
-    return bb;
+    return OK;
 }
 
-BB* BB_shl(BB* bb, size_t shift)
+// Operation OR (|)
+int BB_or(BB** r, BB* a, BB* b)
 {
-    size_t byte_shift = shift / 8;
-    size_t bit_shift = shift % 8;
+    // Make first BigBool >= than second
+    if ((a->last_byte * 8 + a->last_bit) < (b->last_byte * 8 + b->last_bit))
+        return BB_or(r, b, a);
 
-    BB* sbb = calloc(1, sizeof(BB));
-    if (sbb == NULL)
-        return NULL;
+    if (handle_args(r, a) == FAIL)
+        return FAIL;
 
-    sbb->vector = calloc(bb->last_byte * 8 + (bb->last_bit > 0), sizeof(uint8_t));
-    if (sbb->vector == NULL)
+    for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
-        free(sbb);
-        return NULL;
+        (*r)->vector[byte] = a->vector[byte] | b->vector[byte];
     }
 
-    sbb->last_byte = bb->last_byte;
-    sbb->last_bit = bb->last_bit;
-
-    // Return empty vector (shift is bigger than vector size)
-    if (shift >= bb->last_byte * 8 + bb->last_bit)
+    for (size_t byte = b->last_byte + 1; byte <= a->last_byte; byte++)
     {
-        return sbb;
+        (*r)->vector[byte] = a->vector[byte];
     }
 
-    // Shift bits and bytes
-    uint8_t to_next_byte = 0;
-    for (size_t byte = byte_shift; byte < sbb->last_byte + (sbb->last_bit > 0); byte++)
-    {
-        uint8_t tmp_to_next_byte = bb->vector[byte - byte_shift] >> (8 - bit_shift);
-        sbb->vector[byte] = (bb->vector[byte - byte_shift] << bit_shift) | to_next_byte;
-        to_next_byte = tmp_to_next_byte;
-    }
-
-    return sbb;
+    return OK;
 }
 
-BB* BB_shr(BB* bb, size_t shift)
+// Operation XOR (^)
+int BB_xor(BB** r, BB* a, BB* b)
 {
-    size_t byte_shift = shift / 8;
-    size_t bit_shift = shift % 8;
+    // Make first BigBool >= than second
+    if ((a->last_byte * 8 + a->last_bit) < (b->last_byte * 8 + b->last_bit))
+        return BB_xor(r, b, a);
 
-    BB* sbb = calloc(1, sizeof(BB));
-    
-    if (sbb == NULL)
+    if (handle_args(r, a) == FAIL)
+        return FAIL;
+
+    for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
-        return NULL;
+        (*r)->vector[byte] = a->vector[byte] ^ b->vector[byte];
+    }
+    for (size_t byte = b->last_byte + 1; byte <= a->last_byte; byte++)
+    {
+        (*r)->vector[byte] = a->vector[byte] ^ (uint8_t) 0;
     }
 
-    sbb->vector = calloc(bb->last_byte * 8 + (bb->last_bit > 0), sizeof(uint8_t));
-    if (sbb->vector == NULL)
-    {
-        free(sbb);
-        return NULL;
-    }
-
-    sbb->last_byte = bb->last_byte;
-    sbb->last_bit = bb->last_bit;
-
-    // Return empty vector (shift is bigger than vector size)
-    if (shift >= bb->last_byte * 8 + bb->last_bit)
-    {
-        return sbb;
-    }
-
-    // Shift bits and bytes
-    uint8_t to_next_byte = 0;
-    size_t last_not_empty_byte = sbb->last_byte + (sbb->last_bit > 0) - byte_shift - 1;
-    for (size_t byte = last_not_empty_byte + 1; byte > 0; byte--)
-    {
-        uint8_t tmp_to_next_byte = bb->vector[byte - 1 + byte_shift] << (8 - bit_shift);
-        sbb->vector[byte - 1] = (bb->vector[byte - 1 + byte_shift] >> bit_shift) | to_next_byte;
-        to_next_byte = tmp_to_next_byte;
-    }
-
-    return sbb;
+    return OK;
 }
 
-BB* BB_ror(BB* bb, size_t shift)
+// TODO: something with this waste and all below.
+int BB_shl(BB** r, BB* a, size_t shift)
 {
-    size_t size = bb->last_byte * 8 + bb->last_bit;
-    shift %= size;
-    BB* op1 = BB_shr(bb, shift);
-    BB* op2 = BB_shl(bb, size - shift);
-    BB* ror = BB_or(op1, op2);
-    BB_free(op1);
-    BB_free(op2);
-    return ror;
+//    size_t byte_shift = shift / 8;
+//    size_t bit_shift = shift % 8;
+//    size_t a_size = a->last_byte * 8 + a->last_bit;
+//
+//    BB_free(*r);
+//
+//    BB_zero(r, shift + a_size);
+//    if ((*r) == NULL)
+//        return FAIL;
+//
+//    // Shift bits and bytes
+//    uint8_t to_next_byte = 0;
+//    for (size_t byte = byte_shift; byte < (*r)->last_byte + ((*r)->last_bit > 0); byte++)
+//    {
+//        uint8_t tmp_to_next_byte = a->vector[byte - byte_shift] >> (8 - bit_shift);
+//        (*r)->vector[byte] = (a->vector[byte - byte_shift] << bit_shift) | to_next_byte;
+//        to_next_byte = tmp_to_next_byte;
+//    }
+
+    return OK;
 }
 
-BB* BB_rol(BB* bb, size_t shift)
+int BB_shr(BB** r, BB* a, size_t shift)
 {
-    size_t size = bb->last_byte * 8 + bb->last_bit;
-    shift %= size;
-    BB* op1 = BB_shl(bb, shift);
-    BB* op2 = BB_shr(bb, size - shift);
-    BB* rol = BB_or(op1, op2);
-    BB_free(op1);
-    BB_free(op2);
-    return rol;
+//    size_t byte_shift = shift / 8;
+//    size_t bit_shift = shift % 8;
+//    size_t a_size = a->last_byte * 8 + a->last_bit;
+//
+//    if ((*r) != NULL)
+//        BB_free(*r);
+//
+//    // Return empty vector (shift is bigger than vector size)
+//    if (shift >= a_size)
+//    {
+//        (*r) = BB_zero(1);
+//        return ((*r) == NULL) ? FAIL : OK;
+//    }
+//
+//    (*r) = BB_zero(a_size - shift);
+//
+//    // Shift bits and bytes
+//    uint8_t to_next_byte = 0;
+//    size_t last_not_empty_byte = (*r)->last_byte + ((*r)->last_bit > 0) - byte_shift - 1;
+//    for (size_t byte = last_not_empty_byte + 1; byte > 0; byte--)
+//    {
+//        uint8_t tmp_to_next_byte = a->vector[byte - 1 + byte_shift] << (8 - bit_shift);
+//        (*r)->vector[byte - 1] = (a->vector[byte - 1 + byte_shift] >> bit_shift) | to_next_byte;
+//        to_next_byte = tmp_to_next_byte;
+//    }
+
+    return OK;
+}
+
+int BB_ror(BB** r, BB* a, size_t shift)
+{
+//    size_t size = a->last_byte * 8 + a->last_bit;
+//    shift %= size;
+//    BB_shr(r, a, shift);
+//    BB_shl(r, a, size - shift);
+//    BB_or(r, op1, op2);
+//    BB_free(op1);
+//    BB_free(op2);
+    return OK;
+}
+
+int BB_rol(BB** r, BB* a, size_t shift)
+{
+//    size_t size = a->last_byte * 8 + a->last_bit;
+//    shift %= size;
+//    BB* op1 = BB_shl(r, a, shift);
+//    BB* op2 = BB_shr(r, a, size - shift);
+//    BB* rol = BB_or(r, op1, op2);
+//    BB_free(op1);
+//    BB_free(op2);
+    return OK;
 }
