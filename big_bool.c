@@ -344,6 +344,53 @@ int BB_shl(BB** r, BB* a, size_t shift)
     return OK;
 }
 
+// Shift left operation (<<). (Vector stays the same size, head cuts)
+int BB_shl_fs(BB** r, BB* a, size_t shift)
+{
+    if (r == NULL)
+        return FAIL;
+
+    int need_to_free = 0;
+    if ((*r) == a)
+    {
+        int status = BB_copy(&a, a);
+        if (status == FAIL)
+            return FAIL;
+        need_to_free = 1;
+    }
+
+    if ((*r) != NULL)
+        BB_free(*r);
+
+    size_t a_size = a->last_byte * 8 + a->last_bit;
+
+    if (a_size < shift)
+    {
+        return BB_zero(r, 1);
+    }
+
+    BB_zero(r, a_size);
+    if ((*r) == NULL)
+        return FAIL;
+
+    // Shift bits and bytes
+    size_t byte_shift = shift / 8;
+    size_t bit_shift = shift % 8;
+    uint8_t to_next_byte = 0;
+
+    for (size_t byte = byte_shift; byte < (*r)->last_byte + ((*r)->last_bit > 0); byte++)
+    {
+        uint8_t tmp_to_next_byte = a->vector[byte - byte_shift] >> (8 - bit_shift);
+        (*r)->vector[byte] = (a->vector[byte - byte_shift] << bit_shift) | to_next_byte;
+        to_next_byte = tmp_to_next_byte;
+    }
+
+    if (need_to_free == 1)
+        BB_free(a);
+
+    return OK;
+}
+
 // Shift right operation (>>). (Makes vector smaller)
 int BB_shr(BB** r, BB* a, size_t shift)
 {
@@ -397,24 +444,35 @@ int BB_shr(BB** r, BB* a, size_t shift)
 
 int BB_ror(BB** r, BB* a, size_t shift)
 {
-//    size_t size = a->last_byte * 8 + a->last_bit;
-//    shift %= size;
-//    BB_shr(r, a, shift);
-//    BB_shl(r, a, size - shift);
-//    BB_or(r, op1, op2);
-//    BB_free(op1);
-//    BB_free(op2);
+    size_t size = a->last_byte * 8 + a->last_bit;
+    shift %= size;
+
+    BB* shr = NULL;
+    BB_shr(&shr, a, shift);
+
+    BB* shl_fs = NULL;
+    BB_shl_fs(&shl_fs, a, size - shift);
+    BB_or(r, shl_fs, shr);
+
+    BB_free(shr);
+    BB_free(shl_fs);
     return OK;
 }
 
 int BB_rol(BB** r, BB* a, size_t shift)
 {
-//    size_t size = a->last_byte * 8 + a->last_bit;
-//    shift %= size;
-//    BB* op1 = BB_shl(r, a, shift);
-//    BB* op2 = BB_shr(r, a, size - shift);
-//    BB* rol = BB_or(r, op1, op2);
-//    BB_free(op1);
-//    BB_free(op2);
+    size_t size = a->last_byte * 8 + a->last_bit;
+    shift %= size;
+
+    BB* shl_fs = NULL;
+    BB_shl_fs(&shl_fs, a, shift);
+
+    BB* shr = NULL;
+    BB_shr(&shr, a, size - shift);
+
+    BB_or(r, shl_fs, shr);
+
+    BB_free(shr);
+    BB_free(shl_fs);
     return OK;
 }

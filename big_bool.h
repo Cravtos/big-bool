@@ -31,6 +31,7 @@ int BB_random(BB** r, size_t size);      // Generate random BigBool
 // Functions below return OK (1) on success, FAIL (0) on fail.
 int BB_shr(BB** r, BB* a, size_t n);
 int BB_shl(BB** r, BB* a, size_t n);
+int BB_shl_fs(BB** r, BB* a, size_t n);  // Vector stays the same size, head cuts
 int BB_ror(BB** r, BB* a, size_t n);
 int BB_rol(BB** r, BB* a, size_t n);
 int BB_and(BB** r, BB* a, BB* b);
