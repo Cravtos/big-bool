@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define CHECK_STATUS(r) if (status == FAIL) { (r) = NULL; return FAIL;}
 
 // TODO: Trim leading zeros.
 // Create vector from number
@@ -21,11 +22,7 @@ int BB_from_uint64(BB** r, uint64_t number)
     }
 
     status = BB_zero(r, sizeof(uint64_t) * 8);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     for (size_t byte = 0; byte < (*r)->last_byte; byte++)
     {
@@ -57,11 +54,7 @@ int BB_random(BB** r, size_t size)
 
     status = BB_zero(r, size);
 
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     for (size_t i = 0; i <= (*r)->last_byte; i++)
     {
@@ -160,11 +153,7 @@ int BB_from_str(BB** r, const char *str)
             return FAIL;
 
     status = BB_zero(r, len);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     size_t last_byte = (*r)->last_byte;
     size_t last_bit = (*r)->last_bit;
@@ -205,11 +194,7 @@ int BB_copy(BB** to, BB* from)
         return FAIL;
 
     status = BB_zero(to, from->last_byte * 8 + from->last_bit);
-    if (status == FAIL)
-    {
-        (*to) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*to);
 
     memcpy((*to)->vector, from->vector, from->last_byte + (from->last_bit > 0));
 
@@ -333,11 +318,7 @@ int BB_shl(BB** r, BB* a, size_t shift)
     if ((*r) == a)
     {
         status = BB_copy(&a, a);
-        if (status == FAIL)
-        {
-            (*r) = NULL;
-            return FAIL;
-        }
+        CHECK_STATUS(*r);
         need_to_free = 1;
     }
 
@@ -346,11 +327,7 @@ int BB_shl(BB** r, BB* a, size_t shift)
 
     size_t a_size = a->last_byte * 8 + a->last_bit;
     status = BB_zero(r, shift + a_size);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
@@ -384,11 +361,7 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
     if ((*r) == a)
     {
         status = BB_copy(&a, a);
-        if (status == FAIL)
-        {
-            (*r) = NULL;
-            return FAIL;
-        }
+        CHECK_STATUS(*r);
         need_to_free = 1;
     }
 
@@ -403,11 +376,7 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
     }
 
     status = BB_zero(r, a_size);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
@@ -441,11 +410,7 @@ int BB_shr(BB** r, BB* a, size_t shift)
     if ((*r) == a)
     {
         status = BB_copy(&a, a);
-        if (status == FAIL)
-        {
-            (*r) = NULL;
-            return FAIL;
-        }
+        CHECK_STATUS(*r);
         need_to_free = 1;
     }
 
@@ -460,11 +425,7 @@ int BB_shr(BB** r, BB* a, size_t shift)
     }
 
     status = BB_zero(r, a_size - shift);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
@@ -491,33 +452,19 @@ int BB_shr(BB** r, BB* a, size_t shift)
 int BB_ror(BB** r, BB* a, size_t shift)
 {
     int status = OK;
-
     size_t size = a->last_byte * 8 + a->last_bit;
     shift %= size;
 
     BB* shr = NULL;
     status = BB_shr(&shr, a, shift);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     BB* shl_fs = NULL;
-
     status = BB_shl_fs(&shl_fs, a, size - shift);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     status = BB_or(r, shl_fs, shr);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     BB_free(shr);
     BB_free(shl_fs);
@@ -527,32 +474,19 @@ int BB_ror(BB** r, BB* a, size_t shift)
 int BB_rol(BB** r, BB* a, size_t shift)
 {
     int status = OK;
-
     size_t size = a->last_byte * 8 + a->last_bit;
     shift %= size;
 
     BB* shl_fs = NULL;
     status = BB_shl_fs(&shl_fs, a, shift);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     BB* shr = NULL;
     status = BB_shr(&shr, a, size - shift);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     status = BB_or(r, shl_fs, shr);
-    if (status == FAIL)
-    {
-        (*r) = NULL;
-        return FAIL;
-    }
+    CHECK_STATUS(*r);
 
     BB_free(shr);
     BB_free(shl_fs);
