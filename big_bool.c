@@ -315,7 +315,7 @@ int BB_xor(BB** r, BB* a, BB* b)
     }
     for (size_t byte = b->last_byte + 1; byte <= a->last_byte; byte++)
     {
-        (*r)->vector[byte] = a->vector[byte] ^ (uint8_t) 0;
+        (*r)->vector[byte] = a->vector[byte];
     }
 
     return OK;
