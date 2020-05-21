@@ -5,7 +5,6 @@
 
 #define CHECK_STATUS(r) if (status == FAIL) { (r) = NULL; return FAIL;}
 
-// TODO: Trim leading zeros.
 // Create vector from number
 int BB_from_uint64(BB** r, uint64_t number)
 {
@@ -206,6 +205,32 @@ void BB_free(BB* a)
 {
     free(a->vector);
     free(a);
+}
+
+// Removes leading zeros from vector.
+int BB_trim(BB** r)
+{
+    size_t significant_byte = (*r)->last_byte;
+    size_t significant_bit = 7;
+
+    // Get last significant byte and bit
+    while ((*r)->vector[significant_byte] == 0 && significant_byte > 0)
+        significant_byte--;
+
+    while ((((*r)->vector[significant_byte] >> significant_bit) & 1) == 0 && significant_bit > 0)
+        significant_bit--;
+    significant_bit++;
+
+    // Reallocate memory
+    (*r)->vector = realloc((*r)->vector, significant_byte + (significant_bit > 0));
+    if ((*r) == NULL)
+        return FAIL;
+
+    // Change vector sizes
+    (*r)->last_byte = significant_byte;
+    (*r)->last_bit = significant_bit;
+
+    return OK;
 }
 
 /*
@@ -449,6 +474,7 @@ int BB_shr(BB** r, BB* a, size_t shift)
     return OK;
 }
 
+// Cycle right-shift operation.
 int BB_ror(BB** r, BB* a, size_t shift)
 {
     int status = OK;
@@ -471,6 +497,7 @@ int BB_ror(BB** r, BB* a, size_t shift)
     return status;
 }
 
+// Cycle left-shift operation.
 int BB_rol(BB** r, BB* a, size_t shift)
 {
     int status = OK;
