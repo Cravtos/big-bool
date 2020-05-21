@@ -8,6 +8,8 @@
 // Create vector from number
 int BB_from_uint64(BB** r, uint64_t number)
 {
+    int status = OK;
+
     if (r == NULL)
     {
         return FAIL;
@@ -18,9 +20,12 @@ int BB_from_uint64(BB** r, uint64_t number)
         BB_free((*r));
     }
 
-    BB_zero(r, sizeof(uint64_t) * 8);
-    if ((*r) == NULL)
+    status = BB_zero(r, sizeof(uint64_t) * 8);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
         return FAIL;
+    }
 
     for (size_t byte = 0; byte < (*r)->last_byte; byte++)
     {
@@ -28,7 +33,7 @@ int BB_from_uint64(BB** r, uint64_t number)
         number >>= 8u;
     }
 
-    return OK;
+    return status;
 }
 
 // Specifies seed for random.
@@ -40,27 +45,30 @@ void BB_srandom(size_t seed)
 // Creates random vector.
 int BB_random(BB** r, size_t size)
 {
-    if (r == NULL)
-    {
+    int status = OK;
+
+    if (r==NULL) {
         return FAIL;
     }
 
-    if ((*r) != NULL)
-    {
+    if ((*r)!=NULL) {
         BB_free(*r);
     }
 
-    BB_zero(r, size);
+    status = BB_zero(r, size);
 
-    if ((*r) == NULL)
+    if (status == FAIL)
+    {
+        (*r) = NULL;
         return FAIL;
+    }
 
     for (size_t i = 0; i <= (*r)->last_byte; i++)
     {
         (*r)->vector[i] = (uint8_t) rand();
     }
 
-    return OK;
+    return status;
 }
 
 // Creates vector filled with zeros.
@@ -133,6 +141,8 @@ char* BB_to_str(BB *a)
 // Creates vector from string.
 int BB_from_str(BB** r, const char *str)
 {
+    int status = OK;
+
     if (r == NULL)
     {
         return FAIL;
@@ -149,9 +159,12 @@ int BB_from_str(BB** r, const char *str)
         if (str[i] != '0' && str[i] != '1')
             return FAIL;
 
-    BB_zero(r, len);
-    if ((*r) == NULL)
+    status = BB_zero(r, len);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
         return FAIL;
+    }
 
     size_t last_byte = (*r)->last_byte;
     size_t last_bit = (*r)->last_bit;
@@ -175,6 +188,8 @@ int BB_from_str(BB** r, const char *str)
 // Creates a full copy of vector.
 int BB_copy(BB** to, BB* from)
 {
+    int status = OK;
+
     if (to == NULL)
         return FAIL;
 
@@ -189,9 +204,12 @@ int BB_copy(BB** to, BB* from)
     if ((*to) == NULL)
         return FAIL;
 
-    BB_zero(to, from->last_byte * 8 + from->last_bit);
-    if ((*to) == NULL)
+    status = BB_zero(to, from->last_byte * 8 + from->last_bit);
+    if (status == FAIL)
+    {
+        (*to) = NULL;
         return FAIL;
+    }
 
     memcpy((*to)->vector, from->vector, from->last_byte + (from->last_bit > 0));
 
@@ -306,15 +324,20 @@ int BB_xor(BB** r, BB* a, BB* b)
 // Shift left operation (<<). (Makes vector bigger)
 int BB_shl(BB** r, BB* a, size_t shift)
 {
+    int status = OK;
+
     if (r == NULL)
         return FAIL;
 
     int need_to_free = 0;
     if ((*r) == a)
     {
-        int status = BB_copy(&a, a);
+        status = BB_copy(&a, a);
         if (status == FAIL)
+        {
+            (*r) = NULL;
             return FAIL;
+        }
         need_to_free = 1;
     }
 
@@ -322,9 +345,12 @@ int BB_shl(BB** r, BB* a, size_t shift)
         BB_free(*r);
 
     size_t a_size = a->last_byte * 8 + a->last_bit;
-    BB_zero(r, shift + a_size);
-    if ((*r) == NULL)
+    status = BB_zero(r, shift + a_size);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
         return FAIL;
+    }
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
@@ -334,7 +360,9 @@ int BB_shl(BB** r, BB* a, size_t shift)
     for (size_t byte = byte_shift; byte < (*r)->last_byte + ((*r)->last_bit > 0); byte++)
     {
         uint8_t tmp_to_next_byte = a->vector[byte - byte_shift] >> (8 - bit_shift);
-        (*r)->vector[byte] = (a->vector[byte - byte_shift] << bit_shift) | to_next_byte;
+        (*r)->vector[byte] = a->vector[byte - byte_shift];
+        (*r)->vector[byte] <<= bit_shift;
+        (*r)->vector[byte] |= to_next_byte;
         to_next_byte = tmp_to_next_byte;
     }
 
@@ -347,15 +375,20 @@ int BB_shl(BB** r, BB* a, size_t shift)
 // Shift left operation (<<). (Vector stays the same size, head cuts)
 int BB_shl_fs(BB** r, BB* a, size_t shift)
 {
+    int status = OK;
+
     if (r == NULL)
         return FAIL;
 
     int need_to_free = 0;
     if ((*r) == a)
     {
-        int status = BB_copy(&a, a);
+        status = BB_copy(&a, a);
         if (status == FAIL)
+        {
+            (*r) = NULL;
             return FAIL;
+        }
         need_to_free = 1;
     }
 
@@ -369,9 +402,12 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
         return BB_zero(r, 1);
     }
 
-    BB_zero(r, a_size);
-    if ((*r) == NULL)
+    status = BB_zero(r, a_size);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
         return FAIL;
+    }
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
@@ -381,7 +417,9 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
     for (size_t byte = byte_shift; byte < (*r)->last_byte + ((*r)->last_bit > 0); byte++)
     {
         uint8_t tmp_to_next_byte = a->vector[byte - byte_shift] >> (8 - bit_shift);
-        (*r)->vector[byte] = (a->vector[byte - byte_shift] << bit_shift) | to_next_byte;
+        (*r)->vector[byte] = a->vector[byte - byte_shift];
+        (*r)->vector[byte] <<= bit_shift;
+        (*r)->vector[byte] |= to_next_byte;
         to_next_byte = tmp_to_next_byte;
     }
 
@@ -394,15 +432,20 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
 // Shift right operation (>>). (Makes vector smaller)
 int BB_shr(BB** r, BB* a, size_t shift)
 {
+    int status = OK;
+
     if (r == NULL)
         return FAIL;
 
     int need_to_free = 0;
     if ((*r) == a)
     {
-        int status = BB_copy(&a, a);
+        status = BB_copy(&a, a);
         if (status == FAIL)
+        {
+            (*r) = NULL;
             return FAIL;
+        }
         need_to_free = 1;
     }
 
@@ -416,9 +459,12 @@ int BB_shr(BB** r, BB* a, size_t shift)
         return BB_zero(r, 1); // return FAIL or OK
     }
 
-    BB_zero(r, a_size - shift);
-    if ((*r) == NULL)
+    status = BB_zero(r, a_size - shift);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
         return FAIL;
+    }
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
@@ -444,33 +490,69 @@ int BB_shr(BB** r, BB* a, size_t shift)
 
 int BB_ror(BB** r, BB* a, size_t shift)
 {
+    int status = OK;
+
     size_t size = a->last_byte * 8 + a->last_bit;
     shift %= size;
 
     BB* shr = NULL;
-    BB_shr(&shr, a, shift);
+    status = BB_shr(&shr, a, shift);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
+        return FAIL;
+    }
 
     BB* shl_fs = NULL;
-    BB_shl_fs(&shl_fs, a, size - shift);
-    BB_or(r, shl_fs, shr);
+
+    status = BB_shl_fs(&shl_fs, a, size - shift);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
+        return FAIL;
+    }
+
+    status = BB_or(r, shl_fs, shr);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
+        return FAIL;
+    }
 
     BB_free(shr);
     BB_free(shl_fs);
-    return OK;
+    return status;
 }
 
 int BB_rol(BB** r, BB* a, size_t shift)
 {
+    int status = OK;
+
     size_t size = a->last_byte * 8 + a->last_bit;
     shift %= size;
 
     BB* shl_fs = NULL;
-    BB_shl_fs(&shl_fs, a, shift);
+    status = BB_shl_fs(&shl_fs, a, shift);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
+        return FAIL;
+    }
 
     BB* shr = NULL;
-    BB_shr(&shr, a, size - shift);
+    status = BB_shr(&shr, a, size - shift);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
+        return FAIL;
+    }
 
-    BB_or(r, shl_fs, shr);
+    status = BB_or(r, shl_fs, shr);
+    if (status == FAIL)
+    {
+        (*r) = NULL;
+        return FAIL;
+    }
 
     BB_free(shr);
     BB_free(shl_fs);

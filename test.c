@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     puts(a_str);
     free(a_str);
 
-    BB_rol(&a, a, 9);
+    BB_shr(&a, a, 3);
     a_str = BB_to_str(a);
     puts(a_str);
     free(a_str);
