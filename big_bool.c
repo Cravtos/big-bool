@@ -160,44 +160,39 @@ int BB_from_str(BB** r, const char *str)
     {
         for (size_t bit = 0; bit < 8; bit++)
         {
-            (*r)->vector[byte] |= (str[len - (byte * 8 + bit + 1)] - '0') << bit; // TODO: Check (unsigned) thing.
+            (*r)->vector[byte] |= (str[len - (byte * 8 + bit + 1)] - (unsigned) '0') << bit;
         }
     }
 
     for (size_t bit = 0; bit < last_bit; bit++)
     {
-        (*r)->vector[last_byte] |= (str[len - (last_byte * 8 + bit + 1)] - '0') << bit;
+        (*r)->vector[last_byte] |= (str[len - (last_byte * 8 + bit + 1)] - (unsigned) '0') << bit;
     }
 
     return OK;
 }
 
-// TODO: Finish copy function.
+// Creates a full copy of vector.
 int BB_copy(BB** to, BB* from)
 {
     if (to == NULL)
-    {
         return FAIL;
-    }
 
     if ((*to) == from)
-    {
-        return OK;
-    }
+        (*to) = NULL;
 
     if ((*to) != NULL)
-    {
         BB_free((*to));
-    }
 
     (*to) = calloc(1, sizeof(BB));
-    if ((*to) == NULL)
-    {
-        return FAIL;
-    }
 
-    (*to)->last_byte = from->last_byte;
-    (*to)->last_bit = from->last_bit;
+    if ((*to) == NULL)
+        return FAIL;
+
+    BB_zero(to, from->last_byte * 8 + from->last_bit);
+    if ((*to) == NULL)
+        return FAIL;
+
     memcpy((*to)->vector, from->vector, from->last_byte + (from->last_bit > 0));
 
     return OK;
@@ -213,7 +208,7 @@ void BB_free(BB* a)
 /*
  * Check if (r == a), (r == NULL) or (r != a) and:
  * If (r == a) -- leave @r unchanged
- * Else -- free @r and point it to new BB
+ * Else -- free @r and point it to new BB of the same size
  * Return FAIL if new BB failed to allocate.
  */
 int handle_args(BB** r, BB* a)
@@ -308,58 +303,94 @@ int BB_xor(BB** r, BB* a, BB* b)
     return OK;
 }
 
-// TODO: something with this waste and all below.
+// Shift left operation (<<). (Makes vector bigger)
 int BB_shl(BB** r, BB* a, size_t shift)
 {
-//    size_t byte_shift = shift / 8;
-//    size_t bit_shift = shift % 8;
-//    size_t a_size = a->last_byte * 8 + a->last_bit;
-//
-//    BB_free(*r);
-//
-//    BB_zero(r, shift + a_size);
-//    if ((*r) == NULL)
-//        return FAIL;
-//
-//    // Shift bits and bytes
-//    uint8_t to_next_byte = 0;
-//    for (size_t byte = byte_shift; byte < (*r)->last_byte + ((*r)->last_bit > 0); byte++)
-//    {
-//        uint8_t tmp_to_next_byte = a->vector[byte - byte_shift] >> (8 - bit_shift);
-//        (*r)->vector[byte] = (a->vector[byte - byte_shift] << bit_shift) | to_next_byte;
-//        to_next_byte = tmp_to_next_byte;
-//    }
+    if (r == NULL)
+        return FAIL;
+
+    int need_to_free = 0;
+    if ((*r) == a)
+    {
+        int status = BB_copy(&a, a);
+        if (status == FAIL)
+            return FAIL;
+        need_to_free = 1;
+    }
+
+    if ((*r) != NULL)
+        BB_free(*r);
+
+    size_t a_size = a->last_byte * 8 + a->last_bit;
+    BB_zero(r, shift + a_size);
+    if ((*r) == NULL)
+        return FAIL;
+
+    // Shift bits and bytes
+    size_t byte_shift = shift / 8;
+    size_t bit_shift = shift % 8;
+    uint8_t to_next_byte = 0;
+
+    for (size_t byte = byte_shift; byte < (*r)->last_byte + ((*r)->last_bit > 0); byte++)
+    {
+        uint8_t tmp_to_next_byte = a->vector[byte - byte_shift] >> (8 - bit_shift);
+        (*r)->vector[byte] = (a->vector[byte - byte_shift] << bit_shift) | to_next_byte;
+        to_next_byte = tmp_to_next_byte;
+    }
+
+    if (need_to_free == 1)
+        BB_free(a);
 
     return OK;
 }
 
+// Shift right operation (>>). (Makes vector smaller)
 int BB_shr(BB** r, BB* a, size_t shift)
 {
-//    size_t byte_shift = shift / 8;
-//    size_t bit_shift = shift % 8;
-//    size_t a_size = a->last_byte * 8 + a->last_bit;
-//
-//    if ((*r) != NULL)
-//        BB_free(*r);
-//
-//    // Return empty vector (shift is bigger than vector size)
-//    if (shift >= a_size)
-//    {
-//        (*r) = BB_zero(1);
-//        return ((*r) == NULL) ? FAIL : OK;
-//    }
-//
-//    (*r) = BB_zero(a_size - shift);
-//
-//    // Shift bits and bytes
-//    uint8_t to_next_byte = 0;
-//    size_t last_not_empty_byte = (*r)->last_byte + ((*r)->last_bit > 0) - byte_shift - 1;
-//    for (size_t byte = last_not_empty_byte + 1; byte > 0; byte--)
-//    {
-//        uint8_t tmp_to_next_byte = a->vector[byte - 1 + byte_shift] << (8 - bit_shift);
-//        (*r)->vector[byte - 1] = (a->vector[byte - 1 + byte_shift] >> bit_shift) | to_next_byte;
-//        to_next_byte = tmp_to_next_byte;
-//    }
+    if (r == NULL)
+        return FAIL;
+
+    int need_to_free = 0;
+    if ((*r) == a)
+    {
+        int status = BB_copy(&a, a);
+        if (status == FAIL)
+            return FAIL;
+        need_to_free = 1;
+    }
+
+    if ((*r) != NULL)
+        BB_free(*r);
+
+    // Return empty vector (shift is bigger than vector size)
+    size_t a_size = a->last_byte * 8 + a->last_bit;
+    if (shift >= a_size)
+    {
+        return BB_zero(r, 1); // return FAIL or OK
+    }
+
+    BB_zero(r, a_size - shift);
+    if ((*r) == NULL)
+        return FAIL;
+
+    // Shift bits and bytes
+    size_t byte_shift = shift / 8;
+    size_t bit_shift = shift % 8;
+
+    uint8_t to_next_byte = 0;
+    size_t last_not_empty_byte = a->last_byte - byte_shift;
+
+    for (size_t byte = last_not_empty_byte + (1); byte > 0; byte--) // +1 Added to byte to avoid endless loop
+    {
+        uint8_t tmp_to_next_byte = a->vector[byte - (1)] << (8 - bit_shift);
+        (*r)->vector[byte - (1)] = a->vector[byte + byte_shift - (1)];
+        (*r)->vector[byte - (1)] >>= bit_shift;
+        (*r)->vector[byte - (1)] |= to_next_byte;
+        to_next_byte = tmp_to_next_byte;
+    }
+
+    if (need_to_free == 1)
+        BB_free(a);
 
     return OK;
 }
