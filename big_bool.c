@@ -29,6 +29,8 @@ int BB_from_uint64(BB** r, uint64_t number)
         number >>= 8u;
     }
 
+    BB_trim(r); // Double work here but idc
+    CHECK_STATUS(*r);
     return status;
 }
 
