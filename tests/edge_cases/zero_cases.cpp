@@ -12,19 +12,19 @@ extern "C" {
 
 TEST(BB_zero, size_0) {
     BB* a = NULL;
-    ASSERT_EQ(BB_zero(&a, 0), BB_FAIL);
+    ASSERT_EQ(BB_zero(&a, 0), BB_EMPTY_VECTOR);
     ASSERT_EQ(a, nullptr);
 }
 
 TEST(BB_from_str, empty_string) {
     BB* a = NULL;
-    ASSERT_EQ(BB_from_str(&a, ""), BB_FAIL);
+    ASSERT_EQ(BB_from_str(&a, ""), BB_EMPTY_VECTOR);
     ASSERT_EQ(a, nullptr);
 }
 
 TEST(BB_random, size_0) {
     BB* a = NULL;
-    ASSERT_EQ(BB_random(&a, 0), BB_FAIL);
+    ASSERT_EQ(BB_random(&a, 0), BB_EMPTY_VECTOR);
     ASSERT_EQ(a, nullptr);
 }
 

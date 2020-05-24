@@ -63,16 +63,18 @@ TEST(shl, size_4_shift_2) {
 
 TEST(shl, size_8_shift_4) {
     BB* a = NULL;
+    BB* b = NULL;
     BB_from_str(&a, "11001010");
 
-    BB_shl(&a, a, 4);
+    BB_shl(&b, a, 4);
 
-    const char* a_str = BB_to_str(a);
+    const char* a_str = BB_to_str(b);
 
     ASSERT_STREQ(a_str, "110010100000");
 
     free((void*) a_str);
     BB_free(a);
+    BB_free(b);
 }
 
 TEST(shl, size_8_shift_8) {

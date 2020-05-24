@@ -83,7 +83,7 @@ TEST(shl_fs, size_8_shift_8) {
 
     const char* a_str = BB_to_str(a);
 
-    ASSERT_STREQ(a_str, "00000000");
+    ASSERT_STREQ(a_str, "0");
 
     free((void*) a_str);
     BB_free(a);

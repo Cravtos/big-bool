@@ -107,14 +107,13 @@ TEST(and, size_64) {
 
     BB_from_str(&a, "0011001100110011001100110011001100110011001100110011001100110011");
     BB_from_str(&b, "0101010101010101010101010101010101010101010101010101010101010101");
-    BB_and(&r, a, b);
+    BB_and(&a, a, b);
 
-    const char* r_str = BB_to_str(r);
+    const char* a_str = BB_to_str(a);
 
-    ASSERT_STREQ(r_str, "0001000100010001000100010001000100010001000100010001000100010001");
+    ASSERT_STREQ(a_str, "0001000100010001000100010001000100010001000100010001000100010001");
 
-    free((void*) r_str);
+    free((void*) a_str);
     BB_free(a);
     BB_free(b);
-    BB_free(r);
 }

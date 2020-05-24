@@ -4,8 +4,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define BB_FAIL 0
-#define BB_OK 1
+
+#define BB_NULL_ARG 1
+#define BB_CANT_ALLOCATE 2
+#define BB_EMPTY_VECTOR 3
+#define BB_BAD_STRING 4
+#define BB_COPY_ITSELF 5
+#define BB_OK 0
 
 struct _BB {
     uint8_t* vector;    // First byte in vector is the least significant byte.
@@ -33,6 +38,7 @@ void BB_free(BB* a);
 // Misc
 int BB_copy(BB** to, BB* from);
 int BB_trim(BB** r);
+int BB_resize(BB** r, size_t new_size);
 
 // To string
 char* BB_to_str(BB* a);

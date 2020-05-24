@@ -187,6 +187,20 @@ TEST(shr, size_20_shift_10) {
     BB_free(a);
 }
 
+TEST(shr, size_20_shift_10_value_1) {
+    BB* a = NULL;
+    BB_from_str(&a, "11111111111111111111");
+
+    BB_shr(&a, a, 10);
+
+    const char* a_str = BB_to_str(a);
+
+    ASSERT_STREQ(a_str, "1111111111");
+
+    free((void*) a_str);
+    BB_free(a);
+}
+
 TEST(shr, size_64_shift_8) {
     BB* a = NULL;
     BB_from_str(&a, "1100101011001111010111001010110011110101110010101100111101010101");
