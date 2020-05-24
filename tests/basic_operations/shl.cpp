@@ -214,3 +214,17 @@ TEST(shl, size_61_shift_3) {
     free((void*) a_str);
     BB_free(a);
 }
+
+TEST(shl, size_64_shift_11) {
+    BB* a = NULL;
+    BB_from_str(&a, "1100101011001111010111001010110011110101110010101100111101011010");
+
+    BB_shl(&a, a, 11);
+
+    const char* a_str = BB_to_str(a);
+
+    ASSERT_STREQ(a_str, "110010101100111101011100101011001111010111001010110011110101101000000000000");
+
+    free((void*) a_str);
+    BB_free(a);
+}
