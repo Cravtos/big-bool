@@ -9,8 +9,8 @@
 
 struct _BB {
     uint8_t* vector;    // First byte in vector is the least significant byte.
-    size_t last_byte;   // Last accessible byte in vector (only if last_bit > 0)
-    size_t last_bit;    // Amount of bits
+    size_t last_byte;   // length of vector / 8
+    size_t last_bit;    // length of vector % 8
 };
 
 typedef struct _BB BB;

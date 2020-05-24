@@ -97,7 +97,6 @@ int BB_zero(BB** r, size_t size)
         return BB_FAIL;
     }
 
-    // (*r)->last_byte = (last_byte > 0 && last_bit == 0) ? last_byte - 1 : last_byte;
     (*r)->last_byte = last_byte;
     (*r)->last_bit = last_bit;
 
@@ -471,10 +470,9 @@ int BB_shr(BB** r, BB* a, size_t shift)
 
     uint8_t to_next_byte = 0;
     size_t last_not_empty_byte = a->last_byte + (a->last_bit > 0) - byte_shift - 1;
-
     for (size_t byte = last_not_empty_byte + (1); byte > 0; byte--) // +1 Added to byte to avoid endless loop
     {
-        uint8_t tmp_to_next_byte = a->vector[byte - (1)] << (8 - bit_shift);
+        uint8_t tmp_to_next_byte = a->vector[byte - (1) + byte_shift] << (8 - bit_shift);
         (*r)->vector[byte - (1)] = a->vector[byte + byte_shift - (1)];
         (*r)->vector[byte - (1)] >>= bit_shift;
         (*r)->vector[byte - (1)] |= to_next_byte;
