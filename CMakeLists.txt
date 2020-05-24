@@ -1,11 +1,45 @@
 cmake_minimum_required(VERSION 3.15)
-project(BigBool C)
+project(BigBool)
 
-set(CMAKE_C_STANDARD 99)
+# -----------------------------------------------------
+# Download and unpack googletest at configure time
+configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+if(result)
+    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+if(result)
+    message(FATAL_ERROR "Build step for googletest failed: ${result}")
+endif()
 
-add_library(BigBool big_bool.c big_bool.h)
-add_executable(main main.c)
+# Prevent overriding the parent project's compiler/linker
+# settings on Windows
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-target_link_libraries(main BigBool)
+# Add googletest directly to our build. This defines
+# the gtest and gtest_main targets.
+add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+        ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+        EXCLUDE_FROM_ALL)
 
+# The gtest/gtest_main targets carry header search path
+# dependencies automatically when using CMake 2.8.11 or
+# later. Otherwise we have to add them here ourselves.
+if (CMAKE_VERSION VERSION_LESS 2.8.11)
+    include_directories("${gtest_SOURCE_DIR}/include")
+endif()
+# -----------------------------------------------------
 enable_testing()
+add_subdirectory(tests)
+
+include_directories("${PROJECT_SOURCE_DIR}/include")
+file(GLOB sources
+        "${PROJECT_SOURCE_DIR}/include/big_bool/*.h"
+        "${PROJECT_SOURCE_DIR}/src/*.c")
+
+add_executable(main ${sources})

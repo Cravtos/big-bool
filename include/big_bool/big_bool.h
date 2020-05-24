@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define FAIL 0
-#define OK 1
+#define BB_FAIL 0
+#define BB_OK 1
 
 struct _BB {
     uint8_t* vector;    // First byte in vector is the least significant byte.
-    size_t last_byte;   // Last accessible byte in vector
+    size_t last_byte;   // Last accessible byte in vector (only if last_bit > 0)
     size_t last_bit;    // Amount of bits
 };
 
