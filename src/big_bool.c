@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define CHECK_ALLOCATION(r) if (status == BB_CANT_ALLOCATE) return BB_CANT_ALLOCATE
+#define CHECK_STATUS() if (status != BB_OK) return status
 
 size_t size_in_bits(BB* r)
 {
@@ -21,7 +21,7 @@ int BB_from_uint64(BB** r, uint64_t number)
     }
 
     status = BB_zero(r, sizeof(uint64_t) * 8);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     for (size_t byte = 0; byte <= (*r)->last_byte; byte++)
     {
@@ -50,7 +50,7 @@ int BB_random(BB** r, size_t size)
         return BB_EMPTY_VECTOR;
 
     status = BB_zero(r, size);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     for (size_t i = 0; i <= (*r)->last_byte; i++)
     {
@@ -139,7 +139,7 @@ int BB_from_str(BB** r, const char *str)
             return BB_BAD_STRING;
 
     status = BB_zero(r, len);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     size_t last_byte = (*r)->last_byte;
     size_t last_bit = (*r)->last_bit;
@@ -177,7 +177,7 @@ int BB_copy(BB** to, BB* from)
         return BB_COPY_ITSELF;
 
     status = BB_zero(to, size_in_bits(from));
-    CHECK_ALLOCATION(*to);
+    CHECK_STATUS();
 
     size_t allocated_bytes = from->last_byte + (from->last_bit > 0);
     memcpy((*to)->vector, from->vector, allocated_bytes);
@@ -272,8 +272,7 @@ int handle_args(BB** r, BB* a)
         if ((*r) != NULL)
         {
             status = BB_resize(r, size_in_bits(a));
-            if (status != BB_OK)
-                return status;
+            CHECK_STATUS();
         }
         else if ((*r) == NULL)
         {
@@ -288,8 +287,7 @@ int BB_not(BB** r, BB* a)
 {
     int status = BB_OK;
     status = handle_args(r, a);
-    if (status != BB_OK)
-        return status;
+    CHECK_STATUS();
 
     for (size_t byte = 0; byte <= a->last_byte; byte++)
     {
@@ -309,8 +307,7 @@ int BB_and(BB** r, BB* a, BB* b)
 
     int status = BB_OK;
     status = handle_args(r, a);
-    if (status != BB_OK)
-        return status;
+    CHECK_STATUS();
 
     for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
@@ -329,8 +326,7 @@ int BB_or(BB** r, BB* a, BB* b)
 
     int status = BB_OK;
     status = handle_args(r, a);
-    if (status != BB_OK)
-        return status;
+    CHECK_STATUS();
 
     for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
@@ -354,8 +350,7 @@ int BB_xor(BB** r, BB* a, BB* b)
 
     int status = BB_OK;
     status = handle_args(r, a);
-    if (status != BB_OK)
-        return status;
+    CHECK_STATUS();
 
     for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
@@ -379,13 +374,12 @@ int BB_shl(BB** r, BB* a, size_t shift)
     if (*r == NULL)
     {
         status = BB_zero(r, shift + size_in_bits(a));
-        CHECK_ALLOCATION(*r);
+        CHECK_STATUS();
     }
     else
     {
         status = BB_resize(r, shift + size_in_bits(a));
-        if (status != BB_OK)
-            return status;
+        CHECK_STATUS();
     }
 
     // Shift bits and bytes
@@ -432,15 +426,12 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
         if ((*r) != NULL)
         {
             status = BB_resize(r, size_in_bits(a));
-            if (status != BB_OK)
-            {
-                return status;
-            }
+            CHECK_STATUS();
         }
         else
         {
             status = BB_zero(r, size_in_bits(a));
-            CHECK_ALLOCATION(*r);
+            CHECK_STATUS();
         }
     }
 
@@ -509,14 +500,12 @@ int BB_shr(BB** r, BB* a, size_t shift)
     if ((*r) == NULL)
     {
         status = BB_zero(r, size_in_bits(a) - shift);
-        if (status != BB_OK)
-            return status;
+        CHECK_STATUS();
     }
     else if ((*r) != a)
     {
         status = BB_resize(r, size_in_bits(a) - shift);
-        if (status != BB_OK)
-            return status;
+        CHECK_STATUS();
     }
 
     // Shift bits and bytes
@@ -557,14 +546,14 @@ int BB_ror(BB** r, BB* a, size_t shift)
 
     BB* shr = NULL;
     status = BB_shr(&shr, a, shift);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     BB* shl_fs = NULL;
     status = BB_shl_fs(&shl_fs, a, size - shift);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     status = BB_or(r, shl_fs, shr);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     BB_free(shr);
     BB_free(shl_fs);
@@ -580,14 +569,14 @@ int BB_rol(BB** r, BB* a, size_t shift)
 
     BB* shl_fs = NULL;
     status = BB_shl_fs(&shl_fs, a, shift);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     BB* shr = NULL;
     status = BB_shr(&shr, a, size - shift);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     status = BB_or(r, shl_fs, shr);
-    CHECK_ALLOCATION(*r);
+    CHECK_STATUS();
 
     BB_free(shr);
     BB_free(shl_fs);
