@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define CHECK_STATUS() if (status != BB_OK) return status
+#define RETURN_ON_FAIL() if (status != BB_OK) return status
 
 size_t size_in_bits(BB* r)
 {
@@ -20,8 +20,21 @@ int BB_from_uint64(BB** r, uint64_t number)
         return BB_NULL_ARG;
     }
 
-    status = BB_zero(r, sizeof(uint64_t) * 8);
-    CHECK_STATUS();
+    if ((*r) == NULL)
+    {
+        status = BB_zero(r, sizeof(uint64_t) * 8);
+        RETURN_ON_FAIL();
+    }
+    else if (size_in_bits(*r) < sizeof(uint64_t) * 8)
+    {
+        status = BB_resize(r, sizeof(uint64_t) * 8);
+        RETURN_ON_FAIL();
+    }
+    else
+    {
+        (*r)->last_byte = sizeof(uint64_t);
+        (*r)->last_bit = 0;
+    }
 
     for (size_t byte = 0; byte <= (*r)->last_byte; byte++)
     {
@@ -49,8 +62,21 @@ int BB_random(BB** r, size_t size)
     if (size == 0)
         return BB_EMPTY_VECTOR;
 
-    status = BB_zero(r, size);
-    CHECK_STATUS();
+    if ((*r) == NULL)
+    {
+        status = BB_zero(r, size);
+        RETURN_ON_FAIL();
+    }
+    else if (size_in_bits(*r) < size)
+    {
+        status = BB_resize(r, size);
+        RETURN_ON_FAIL();
+    }
+    else
+    {
+        (*r)->last_byte = size / 8;
+        (*r)->last_bit = size % 8;
+    }
 
     for (size_t i = 0; i <= (*r)->last_byte; i++)
     {
@@ -63,6 +89,8 @@ int BB_random(BB** r, size_t size)
 // Creates vector filled with zeros.
 int BB_zero(BB** r, size_t size)
 {
+    int status = BB_OK;
+
     if (r == NULL)
         return BB_NULL_ARG;
 
@@ -72,20 +100,36 @@ int BB_zero(BB** r, size_t size)
     size_t last_byte = size / 8;
     size_t last_bit = size % 8;
 
-    (*r) = calloc(1, sizeof(BB));
     if ((*r) == NULL)
-        return BB_CANT_ALLOCATE;
-
-    (*r)->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
-    if ((*r)->vector == NULL)
     {
-        BB_free(*r);
-        return BB_CANT_ALLOCATE;
+        (*r) = calloc(1, sizeof(BB));
+        if ((*r) == NULL)
+        {
+            return BB_CANT_ALLOCATE;
+        }
+
+        (*r)->vector = calloc(last_byte + (last_bit > 0), sizeof(uint8_t));
+        if ((*r)->vector == NULL)
+        {
+            BB_free(*r);
+            return BB_CANT_ALLOCATE;
+        }
+    }
+    else if (size_in_bits(*r) < size)
+    {
+        status = BB_resize(r, size);
+        RETURN_ON_FAIL();
+
+        for (size_t byte = 0; byte < last_byte + (last_bit > 0); byte++)
+        {
+            (*r)->vector[byte] = 0;
+        }
     }
 
-    (*r)->last_byte = last_byte;
-    (*r)->last_bit = last_bit;
-    return BB_OK;
+    (*r)->last_byte = size / 8;
+    (*r)->last_bit = size % 8;
+
+    return status;
 }
 
 // Converts vector to string.
@@ -130,7 +174,6 @@ int BB_from_str(BB** r, const char *str)
         return BB_NULL_ARG;
 
     size_t len = strlen(str);
-
     if (len == 0)
         return BB_EMPTY_VECTOR;
 
@@ -138,11 +181,22 @@ int BB_from_str(BB** r, const char *str)
         if (str[i] != '0' && str[i] != '1')
             return BB_BAD_STRING;
 
-    status = BB_zero(r, len);
-    CHECK_STATUS();
+    size_t last_byte = len / 8;
+    size_t last_bit = len % 8;
 
-    size_t last_byte = (*r)->last_byte;
-    size_t last_bit = (*r)->last_bit;
+    if ((*r) == NULL)
+    {
+        status = BB_zero(r, len);
+        RETURN_ON_FAIL();
+    }
+    else if (size_in_bits(*r) < len)
+    {
+        status = BB_resize(r, len);
+        RETURN_ON_FAIL();
+    }
+
+    (*r)->last_byte = last_byte;
+    (*r)->last_bit = last_bit;
 
     for (size_t byte = 0; byte < last_byte; byte++)
     {
@@ -163,7 +217,7 @@ int BB_from_str(BB** r, const char *str)
         (*r)->vector[last_byte] |= bit_mask;
     }
 
-    return BB_OK;
+    return status;
 }
 
 // Creates a full copy of vector.
@@ -176,12 +230,26 @@ int BB_copy(BB** to, BB* from)
     if ((*to) == from) /* @to and @from is the same pointer */
         return BB_COPY_ITSELF;
 
-    status = BB_zero(to, size_in_bits(from));
-    CHECK_STATUS();
+    size_t size = size_in_bits(from);
+
+    if ((*to) == NULL)
+    {
+        status = BB_zero(to, size);
+        RETURN_ON_FAIL();
+    }
+    else if (size_in_bits(*to) < size)
+    {
+        status = BB_resize(to, size);
+        RETURN_ON_FAIL();
+    }
+
+    (*to)->last_byte = size / 8;
+    (*to)->last_bit = size % 8;
 
     size_t allocated_bytes = from->last_byte + (from->last_bit > 0);
     memcpy((*to)->vector, from->vector, allocated_bytes);
-    return BB_OK;
+
+    return status;
 }
 
 // Frees vector from memory.
@@ -262,23 +330,31 @@ int BB_resize(BB** r, size_t new_size)
  * Compare @r and @a and:
  * If (r == a)    -- leave @r unchanged
  * If (r == NULL) -- create new vector length of @a
- * If (r != NULL) -- resize @r to length of @a
+ * If (r != NULL) -- resize @r to length of @a with reallocation if needed
  */
 int handle_args(BB** r, BB* a)
 {
     int status = BB_OK;
+
+    size_t size = size_in_bits(a);
+
     if ((*r) != a)
     {
-        if ((*r) != NULL)
+        if ((*r) == NULL)
         {
-            status = BB_resize(r, size_in_bits(a));
-            CHECK_STATUS();
+            status = BB_zero(r, size);
+            RETURN_ON_FAIL();
         }
-        else if ((*r) == NULL)
+        else if (size_in_bits(*r) < size)
         {
-            status = BB_zero(r, size_in_bits(a));
+            status = BB_resize(r, size);
+            RETURN_ON_FAIL();
         }
+
+        (*r)->last_byte = size / 8;
+        (*r)->last_bit = size % 8;
     }
+
     return status;
 }
 
@@ -287,7 +363,7 @@ int BB_not(BB** r, BB* a)
 {
     int status = BB_OK;
     status = handle_args(r, a);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     for (size_t byte = 0; byte <= a->last_byte; byte++)
     {
@@ -307,7 +383,7 @@ int BB_and(BB** r, BB* a, BB* b)
 
     int status = BB_OK;
     status = handle_args(r, a);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
@@ -326,7 +402,7 @@ int BB_or(BB** r, BB* a, BB* b)
 
     int status = BB_OK;
     status = handle_args(r, a);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
@@ -350,7 +426,7 @@ int BB_xor(BB** r, BB* a, BB* b)
 
     int status = BB_OK;
     status = handle_args(r, a);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     for (size_t byte = 0; byte <= b->last_byte; byte++)
     {
@@ -371,24 +447,26 @@ int BB_shl(BB** r, BB* a, size_t shift)
     if (r == NULL)
         return BB_NULL_ARG;
 
+    size_t new_size = size_in_bits(a) + shift;
     if (*r == NULL)
     {
-        status = BB_zero(r, shift + size_in_bits(a));
-        CHECK_STATUS();
+        status = BB_zero(r, new_size);
+        RETURN_ON_FAIL();
     }
-    else
+    else if (size_in_bits(*r) < new_size)
     {
-        status = BB_resize(r, shift + size_in_bits(a));
-        CHECK_STATUS();
+        status = BB_resize(r, new_size);
+        RETURN_ON_FAIL();
     }
+
+    (*r)->last_byte = new_size / 8;
+    (*r)->last_bit = new_size % 8;
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
     size_t bit_shift = shift % 8;
 
-    size_t last_accessible_byte = (*r)->last_byte + ((*r)->last_bit > 0);
-    if ((*r)->last_bit == 0)
-        last_accessible_byte--;
+    size_t last_accessible_byte = (*r)->last_byte + ((*r)->last_bit > 0) - 1;
 
     for (size_t byte = last_accessible_byte; byte > byte_shift; byte--)
     {
@@ -421,35 +499,31 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
     if (r == NULL)
         return BB_NULL_ARG;
 
-    if ((*r) != a)
+    // Return empty vector (shift is bigger than vector size)
+    if (shift >= size_in_bits(a))
     {
         if ((*r) != NULL)
         {
-            status = BB_resize(r, size_in_bits(a));
-            CHECK_STATUS();
+            (*r)->last_byte = 0;
+            (*r)->last_bit = 1;
+            (*r)->vector[0] = 0;
+            return status;
         }
         else
         {
-            status = BB_zero(r, size_in_bits(a));
-            CHECK_STATUS();
+            status = BB_zero(r, 1);
+            return status;
         }
     }
 
-    if (size_in_bits(a) <= shift)
-    {
-        (*r)->last_byte = 0;
-        (*r)->last_bit = 1;
-        (*r)->vector[0] = 0;
-        return BB_OK;
-    }
+    status = handle_args(r, a);
+    RETURN_ON_FAIL();
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
     size_t bit_shift = shift % 8;
 
-    size_t last_accessible_byte = (*r)->last_byte + ((*r)->last_bit > 0);
-    if ((*r)->last_bit == 0)
-        last_accessible_byte--;
+    size_t last_accessible_byte = (*r)->last_byte + ((*r)->last_bit > 0) - 1;
 
     for (size_t byte = last_accessible_byte; byte > byte_shift; byte--)
     {
@@ -497,22 +571,26 @@ int BB_shr(BB** r, BB* a, size_t shift)
         }
     }
 
+    size_t last_accessible_byte = a->last_byte + (a->last_bit > 0) - 1;
+    size_t new_size = size_in_bits(a) - shift;
+
     if ((*r) == NULL)
     {
         status = BB_zero(r, size_in_bits(a) - shift);
-        CHECK_STATUS();
+        RETURN_ON_FAIL();
     }
-    else if ((*r) != a)
+    else if (size_in_bits(*r) < new_size)
     {
         status = BB_resize(r, size_in_bits(a) - shift);
-        CHECK_STATUS();
+        RETURN_ON_FAIL();
     }
+
+    (*r)->last_byte = new_size / 8;
+    (*r)->last_bit = new_size % 8;
 
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
     size_t bit_shift = shift % 8;
-
-    size_t last_accessible_byte = a->last_byte + (a->last_bit > 0) - 1;
     size_t last_not_empty_byte = last_accessible_byte - byte_shift;
 
     for (size_t byte = 0; byte < last_not_empty_byte; byte++)
@@ -527,13 +605,6 @@ int BB_shr(BB** r, BB* a, size_t shift)
     (*r)->vector[last_not_empty_byte] = a->vector[last_not_empty_byte + byte_shift];
     (*r)->vector[last_not_empty_byte] >>= bit_shift;
 
-    if ((*r) == a)
-    {
-        size_t new_size = size_in_bits(a) - shift;
-        (*r)->last_byte = new_size / 8;
-        (*r)->last_bit = new_size % 8;
-    }
-
     return status;
 }
 
@@ -546,14 +617,14 @@ int BB_ror(BB** r, BB* a, size_t shift)
 
     BB* shr = NULL;
     status = BB_shr(&shr, a, shift);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     BB* shl_fs = NULL;
     status = BB_shl_fs(&shl_fs, a, size - shift);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     status = BB_or(r, shl_fs, shr);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     BB_free(shr);
     BB_free(shl_fs);
@@ -569,14 +640,14 @@ int BB_rol(BB** r, BB* a, size_t shift)
 
     BB* shl_fs = NULL;
     status = BB_shl_fs(&shl_fs, a, shift);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     BB* shr = NULL;
     status = BB_shr(&shr, a, size - shift);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     status = BB_or(r, shl_fs, shr);
-    CHECK_STATUS();
+    RETURN_ON_FAIL();
 
     BB_free(shr);
     BB_free(shl_fs);
