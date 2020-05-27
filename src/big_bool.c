@@ -295,7 +295,7 @@ int BB_from_str(BB** r, const char *str)
 int BB_copy(BB** to, BB* from)
 {
     int status = BB_OK;
-    if (to == NULL)
+    if (to == NULL || from == NULL)
         return BB_NULL_ARG;
 
     if ((*to) == from) /* @to and @from is the same pointer */
@@ -387,7 +387,6 @@ int BB_shrink(BB** r)
 }
 
 
-
 /*
  * Compare @r and @a and:
  * If (r == a)    -- leave @r unchanged
@@ -396,6 +395,9 @@ int BB_shrink(BB** r)
  */
 int handle_args(BB** r, BB* a)
 {
+    if (r == NULL || a == NULL)
+        return BB_NULL_ARG;
+
     int status = BB_OK;
 
     size_t size = size_in_bits(a);
@@ -423,6 +425,9 @@ int handle_args(BB** r, BB* a)
 // Operation NOT (~)
 int BB_not(BB** r, BB* a)
 {
+    if (r == NULL || a == NULL)
+        return BB_NULL_ARG;
+
     int status = BB_OK;
     status = handle_args(r, a);
     RETURN_ON_FAIL();
@@ -439,6 +444,9 @@ int BB_not(BB** r, BB* a)
 // Operation AND (&)
 int BB_and(BB** r, BB* a, BB* b)
 {
+    if (r == NULL || a == NULL || b == NULL)
+        return BB_NULL_ARG;
+
     // Make first BigBool >= than second
     if (size_in_bits(a) < size_in_bits(b))
         return BB_and(r, b, a);
@@ -458,6 +466,9 @@ int BB_and(BB** r, BB* a, BB* b)
 // Operation OR (|)
 int BB_or(BB** r, BB* a, BB* b)
 {
+    if (r == NULL || a == NULL || b == NULL)
+        return BB_NULL_ARG;
+
     // Make first BigBool >= than second
     if (size_in_bits(a) < size_in_bits(b))
         return BB_or(r, b, a);
@@ -482,6 +493,9 @@ int BB_or(BB** r, BB* a, BB* b)
 // Operation XOR (^)
 int BB_xor(BB** r, BB* a, BB* b)
 {
+    if (r == NULL || a == NULL || b == NULL)
+        return BB_NULL_ARG;
+
     // Make first BigBool >= than second
     if (size_in_bits(a) < size_in_bits(b))
         return BB_xor(r, b, a);
@@ -506,7 +520,7 @@ int BB_xor(BB** r, BB* a, BB* b)
 int BB_shl(BB** r, BB* a, size_t shift)
 {
     int status = BB_OK;
-    if (r == NULL)
+    if (r == NULL || a == NULL)
         return BB_NULL_ARG;
 
     size_t new_size = size_in_bits(a) + shift;
@@ -558,7 +572,7 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
 {
     int status = BB_OK;
 
-    if (r == NULL)
+    if (r == NULL || a == NULL)
         return BB_NULL_ARG;
 
     // Return empty vector (shift is bigger than vector size)
@@ -614,7 +628,7 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
 int BB_shr(BB** r, BB* a, size_t shift)
 {
     int status = BB_OK;
-    if (r == NULL)
+    if (r == NULL || a == NULL)
         return BB_NULL_ARG;
 
     // Return empty vector (shift is bigger than vector size)
@@ -673,6 +687,9 @@ int BB_shr(BB** r, BB* a, size_t shift)
 // Cycle right-shift operation.
 int BB_ror(BB** r, BB* a, size_t shift)
 {
+    if (r == NULL || a == NULL)
+        return BB_NULL_ARG;
+
     int status = BB_OK;
     size_t size = a->last_byte * 8 + a->last_bit;
     shift %= size;
@@ -696,6 +713,9 @@ int BB_ror(BB** r, BB* a, size_t shift)
 // Cycle left-shift operation.
 int BB_rol(BB** r, BB* a, size_t shift)
 {
+    if (r == NULL || a == NULL)
+        return BB_NULL_ARG;
+
     int status = BB_OK;
     size_t size = a->last_byte * 8 + a->last_bit;
     shift %= size;
