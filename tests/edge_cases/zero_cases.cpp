@@ -33,7 +33,7 @@ TEST(BB_from_uint64, 0) {
     ASSERT_EQ(BB_from_uint64(&a, 0), BB_OK);
 
     const char* a_str = BB_to_str(a);
-    ASSERT_STREQ(a_str, "0000000000000000000000000000000000000000000000000000000000000000");
+    ASSERT_STREQ(a_str, "0");
 
     BB_free(a);
     free((void *) a_str);
@@ -44,7 +44,7 @@ TEST(BB_from_uint64, minus_1) {
     ASSERT_EQ(BB_from_uint64(&a, -1), BB_OK);
 
     const char* a_str = BB_to_str(a);
-    ASSERT_STREQ(a_str, "1111111111111111111111111111111111111111111111111111111111111111");
+    ASSERT_STREQ(a_str, "11111111" "11111111" "11111111" "11111111" "11111111" "11111111" "11111111" "11111111");
 
     BB_free(a);
     free((void *) a_str);

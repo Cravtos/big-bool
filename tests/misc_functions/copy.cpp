@@ -57,11 +57,11 @@ TEST(copy, size_16) {
     BB* from = NULL;
     BB* to = NULL;
 
-    BB_from_str(&from, "1010101111101010");
+    BB_from_str(&from, "10101011" "11101010");
     ASSERT_EQ(BB_copy(&to, from), BB_OK);
 
     const char* to_str = BB_to_str(to);
-    ASSERT_STREQ(to_str, "1010101111101010");
+    ASSERT_STREQ(to_str, "10101011" "11101010");
 
 
     BB_free(from);
@@ -73,11 +73,11 @@ TEST(copy, size_20) {
     BB* from = NULL;
     BB* to = NULL;
 
-    BB_from_str(&from, "10101010101010101010");
+    BB_from_str(&from, "1010" "10101010" "10101010");
     ASSERT_EQ(BB_copy(&to, from), BB_OK);
 
     const char* to_str = BB_to_str(to);
-    ASSERT_STREQ(to_str, "10101010101010101010");
+    ASSERT_STREQ(to_str, "1010" "10101010" "10101010");
 
 
     BB_free(from);
@@ -89,11 +89,11 @@ TEST(copy, size_64) {
     BB* from = NULL;
     BB* to = NULL;
 
-    BB_from_str(&from, "1100101011001111010111001010110011110101110010101100111101011010");
+    BB_from_str(&from, "11001010" "11001111" "01011100" "10101100" "11110101" "11001010" "11001111" "01011010");
     ASSERT_EQ(BB_copy(&to, from), BB_OK);
 
     const char* to_str = BB_to_str(to);
-    ASSERT_STREQ(to_str, "1100101011001111010111001010110011110101110010101100111101011010");
+    ASSERT_STREQ(to_str, "11001010" "11001111" "01011100" "10101100" "11110101" "11001010" "11001111" "01011010");
 
 
     BB_free(from);

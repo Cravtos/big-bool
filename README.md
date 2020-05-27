@@ -16,7 +16,7 @@ ___
     
     // Misc
     int BB_copy(BB** to, BB* from);
-    int BB_trim(BB** r);
+    int BB_shrink(BB** r);
     
     // To string
     char* BB_to_str(BB* a);

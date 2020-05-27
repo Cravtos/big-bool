@@ -10,6 +10,38 @@ size_t size_in_bits(BB* r)
     return r->last_byte * 8 + r->last_bit;
 }
 
+int BB_resize(BB** r, size_t new_size)
+{
+    if (r == NULL || (*r) == NULL)
+        return BB_NULL_ARG;
+
+    if (new_size == 0)
+        return BB_EMPTY_VECTOR;
+
+    if (size_in_bits(*r) == new_size)
+        return BB_OK;
+
+    size_t new_last_byte = new_size / 8;
+    size_t new_last_bit = new_size % 8;
+
+    size_t allocated_bytes = (*r)->last_byte + ((*r)->last_bit > 0);
+    size_t new_allocated_bytes = new_last_byte + (new_last_bit > 0);
+
+    (*r)->last_byte = new_size / 8;
+    (*r)->last_bit = new_size % 8;
+
+    if (allocated_bytes == new_allocated_bytes)
+    {
+        return BB_OK;
+    }
+
+    (*r)->vector = realloc((*r)->vector, new_allocated_bytes);
+    if ((*r)->vector == NULL)
+        return BB_CANT_ALLOCATE;
+
+    return BB_OK;
+}
+
 // Create vector from number
 int BB_from_uint64(BB** r, uint64_t number)
 {
@@ -135,15 +167,54 @@ int BB_zero(BB** r, size_t size)
 // Converts vector to string.
 char* BB_to_str(BB *a)
 {
-    size_t last_byte = a->last_byte;
-    size_t last_bit = a->last_bit;
-    size_t size = size_in_bits(a);
+    if (a == NULL)
+    {
+        return NULL;
+    }
 
+    size_t significant_bit = a->last_bit;
+    size_t significant_byte = a->last_byte;
+
+    // Check if last_byte is accessible (can be used as index)
+    if (a->last_bit == 0 && significant_byte > 0)
+    {
+        significant_byte--;
+        significant_bit = 8;
+    }
+    else /* Null bits beyond scope. */
+    {
+        a->vector[significant_byte] <<= (8 - significant_bit);
+        a->vector[significant_byte] >>= (8 - significant_bit);
+    }
+
+    // Get last significant byte and bit
+    while (a->vector[significant_byte] == 0 && significant_byte > 0)
+    {
+        significant_byte--;
+        significant_bit = 8;
+    }
+    while (significant_bit > 0 && ((a->vector[significant_byte] >> (significant_bit - 1)) & 1) == 0)
+    {
+        significant_bit--;
+    }
+
+    // To print 0
+    if (significant_bit == 0 && significant_byte == 0)
+        significant_bit = 1;
+
+    // Since last_bit is size % 8:
+    if (significant_bit == 8)
+    {
+        significant_byte++;
+        significant_bit = 0;
+    }
+
+    size_t size = significant_byte * 8 + significant_bit;
     char *str = calloc(size + 1, sizeof(char));
     if (str == NULL)
         return NULL;
 
-    for (size_t byte = 0; byte < last_byte; byte++)
+    for (size_t byte = 0; byte < significant_byte; byte++)
     {
         for (size_t bit = 0; bit < 8; bit++)
         {
@@ -154,10 +225,10 @@ char* BB_to_str(BB *a)
         }
     }
 
-    for (size_t bit = 0; bit < last_bit; bit++)
+    for (size_t bit = 0; bit < significant_bit; bit++)
     {
-        size_t current_bit = last_byte * 8 + bit;
-        size_t bit_value = (a->vector[last_byte] >> bit) & 1;
+        size_t current_bit = significant_byte * 8 + bit;
+        size_t bit_value = (a->vector[significant_byte] >> bit) & 1;
         size_t idx = (size - 1) - current_bit;
         str[idx] = bit_value + '0';
     }
@@ -260,27 +331,48 @@ void BB_free(BB* a)
 }
 
 // Removes leading zeros from vector.
-int BB_trim(BB** r)
+int BB_shrink(BB** r)
 {
     int status = BB_OK;
     if (r == NULL || (*r) == NULL)
         return BB_NULL_ARG;
 
-    size_t significant_bit = 7;
+    size_t significant_bit = (*r)->last_bit;
     size_t significant_byte = (*r)->last_byte;
-    if ((*r)->last_bit == 0)
+
+    // Check if last_byte is accessible (can be used as index)
+    if ((*r)->last_bit == 0 && significant_byte > 0)
+    {
         significant_byte--;
+        significant_bit = 8;
+    }
+    else /* Null bits beyond scope. */
+    {
+        (*r)->vector[significant_byte] <<= (8 - significant_bit);
+        (*r)->vector[significant_byte] >>= (8 - significant_bit);
+    }
 
     // Get last significant byte and bit
     while ((*r)->vector[significant_byte] == 0 && significant_byte > 0)
     {
         significant_byte--;
+        significant_bit = 8;
     }
-    while ((((*r)->vector[significant_byte] >> significant_bit) & 1) == 0 && significant_bit > 0)
+    while (significant_bit > 0 && (((*r)->vector[significant_byte] >> (significant_bit - 1)) & 1) == 0)
     {
         significant_bit--;
     }
-    significant_bit++;
+
+    // To print 0
+    if (significant_bit == 0 && significant_byte == 0)
+        significant_bit = 1;
+
+    // Since last_bit is size % 8:
+    if (significant_bit == 8)
+    {
+        significant_byte++;
+        significant_bit = 0;
+    }
 
     // Reallocate memory
     size_t allocated_bytes = significant_byte + (significant_bit > 0);
@@ -294,37 +386,7 @@ int BB_trim(BB** r)
     return status;
 }
 
-int BB_resize(BB** r, size_t new_size)
-{
-    if (r == NULL || (*r) == NULL)
-        return BB_NULL_ARG;
 
-    if (new_size == 0)
-        return BB_EMPTY_VECTOR;
-
-    if (size_in_bits(*r) == new_size)
-        return BB_OK;
-
-    size_t new_last_byte = new_size / 8;
-    size_t new_last_bit = new_size % 8;
-
-    size_t allocated_bytes = (*r)->last_byte + ((*r)->last_bit > 0);
-    size_t new_allocated_bytes = new_last_byte + (new_last_bit > 0);
-
-    (*r)->last_byte = new_size / 8;
-    (*r)->last_bit = new_size % 8;
-
-    if (allocated_bytes == new_allocated_bytes)
-    {
-        return BB_OK;
-    }
-
-    (*r)->vector = realloc((*r)->vector, new_allocated_bytes);
-    if ((*r)->vector == NULL)
-        return BB_CANT_ALLOCATE;
-
-    return BB_OK;
-}
 
 /*
  * Compare @r and @a and:
