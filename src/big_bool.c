@@ -68,7 +68,8 @@ int BB_from_uint64(BB** r, uint64_t number)
         (*r)->last_bit = 0;
     }
 
-    for (size_t byte = 0; byte <= (*r)->last_byte; byte++)
+    size_t last_accessible_byte = (*r)->last_byte + ((*r)->last_bit > 0) - 1;
+    for (size_t byte = 0; byte <= last_accessible_byte; byte++)
     {
         (*r)->vector[byte] |= number; // % 256
         number >>= 8u;
@@ -110,9 +111,10 @@ int BB_random(BB** r, size_t size)
         (*r)->last_bit = size % 8;
     }
 
-    for (size_t i = 0; i <= (*r)->last_byte; i++)
+    size_t last_accessible_byte = (*r)->last_byte + ((*r)->last_bit > 0) - 1;
+    for (size_t byte = 0; byte <= last_accessible_byte; byte++)
     {
-        (*r)->vector[i] = (uint8_t) rand();
+        (*r)->vector[byte] = (uint8_t) rand();
     }
 
     return status;
@@ -326,6 +328,9 @@ int BB_copy(BB** to, BB* from)
 // Frees vector from memory.
 void BB_free(BB* a)
 {
+    if (a == NULL || a->vector == NULL)
+        return;
+
     free(a->vector);
     free(a);
 }
@@ -432,10 +437,16 @@ int BB_not(BB** r, BB* a)
     status = handle_args(r, a);
     RETURN_ON_FAIL();
 
-    for (size_t byte = 0; byte <= a->last_byte; byte++)
+    size_t last_accessible_byte = a->last_byte + (a->last_bit > 0) - 1;
+    for (size_t byte = 0; byte <= last_accessible_byte; byte++)
     {
         (*r)->vector[byte] = ~a->vector[byte];
     }
+
+    // Null bits beyond size.
+    size_t tmp_last_bit = (a->last_bit == 0) ? 8 : a->last_bit;
+    (*r)->vector[last_accessible_byte] <<= (8 - tmp_last_bit);
+    (*r)->vector[last_accessible_byte] >>= (8 - tmp_last_bit);
 
     return status;
 }
@@ -455,9 +466,22 @@ int BB_and(BB** r, BB* a, BB* b)
     status = handle_args(r, a);
     RETURN_ON_FAIL();
 
-    for (size_t byte = 0; byte <= b->last_byte; byte++)
+    size_t last_accessible_byte_b = b->last_byte + (b->last_bit > 0) - 1;
+    size_t last_accessible_byte_a = a->last_byte + (a->last_bit > 0) - 1;
+
+    // Null bits beyond size.
+    size_t tmp_last_bit = (b->last_bit == 0) ? 8 : b->last_bit;
+    b->vector[last_accessible_byte_b] <<= (8 - tmp_last_bit);
+    b->vector[last_accessible_byte_b] >>= (8 - tmp_last_bit);
+
+    for (size_t byte = 0; byte <= last_accessible_byte_b; byte++)
     {
         (*r)->vector[byte] = a->vector[byte] & b->vector[byte];
+    }
+
+    for (size_t byte = last_accessible_byte_b + 1; byte <= last_accessible_byte_a; byte++)
+    {
+        (*r)->vector[byte] = 0;
     }
 
     return status;
@@ -477,12 +501,20 @@ int BB_or(BB** r, BB* a, BB* b)
     status = handle_args(r, a);
     RETURN_ON_FAIL();
 
-    for (size_t byte = 0; byte <= b->last_byte; byte++)
+    size_t last_accessible_byte_b = b->last_byte + (b->last_bit > 0) - 1;
+    size_t last_accessible_byte_a = a->last_byte + (a->last_bit > 0) - 1;
+
+    // Null bits beyond size.
+    size_t tmp_last_bit = (b->last_bit == 0) ? 8 : b->last_bit;
+    b->vector[last_accessible_byte_b] <<= (8 - tmp_last_bit);
+    b->vector[last_accessible_byte_b] >>= (8 - tmp_last_bit);
+
+    for (size_t byte = 0; byte <= last_accessible_byte_b; byte++)
     {
         (*r)->vector[byte] = a->vector[byte] | b->vector[byte];
     }
 
-    for (size_t byte = b->last_byte + 1; byte <= a->last_byte; byte++)
+    for (size_t byte = last_accessible_byte_b + 1; byte <= last_accessible_byte_a; byte++)
     {
         (*r)->vector[byte] = a->vector[byte];
     }
@@ -504,11 +536,20 @@ int BB_xor(BB** r, BB* a, BB* b)
     status = handle_args(r, a);
     RETURN_ON_FAIL();
 
-    for (size_t byte = 0; byte <= b->last_byte; byte++)
+    size_t last_accessible_byte_b = b->last_byte + (b->last_bit > 0) - 1;
+    size_t last_accessible_byte_a = a->last_byte + (a->last_bit > 0) - 1;
+
+    // Null bits beyond size.
+    size_t tmp_last_bit = (b->last_bit == 0) ? 8 : b->last_bit;
+    b->vector[last_accessible_byte_b] <<= (8 - tmp_last_bit);
+    b->vector[last_accessible_byte_b] >>= (8 - tmp_last_bit);
+
+    for (size_t byte = 0; byte <= last_accessible_byte_b; byte++)
     {
         (*r)->vector[byte] = a->vector[byte] ^ b->vector[byte];
     }
-    for (size_t byte = b->last_byte + 1; byte <= a->last_byte; byte++)
+
+    for (size_t byte = last_accessible_byte_b + 1; byte <= last_accessible_byte_a; byte++)
     {
         (*r)->vector[byte] = a->vector[byte];
     }
@@ -700,13 +741,17 @@ int BB_ror(BB** r, BB* a, size_t shift)
 
     BB* shl_fs = NULL;
     status = BB_shl_fs(&shl_fs, a, size - shift);
-    RETURN_ON_FAIL();
+    if (status != BB_OK)
+        goto clean_up_shr;
 
     status = BB_or(r, shl_fs, shr);
-    RETURN_ON_FAIL();
+    if (status != BB_OK)
+        goto clean_up_shl_fs;
 
-    BB_free(shr);
+clean_up_shl_fs:
     BB_free(shl_fs);
+clean_up_shr:
+    BB_free(shr);
     return status;
 }
 
@@ -726,12 +771,16 @@ int BB_rol(BB** r, BB* a, size_t shift)
 
     BB* shr = NULL;
     status = BB_shr(&shr, a, size - shift);
-    RETURN_ON_FAIL();
+    if (status != BB_OK)
+        goto clean_up_shl_fs;
 
     status = BB_or(r, shl_fs, shr);
-    RETURN_ON_FAIL();
+    if (status != BB_OK)
+        goto clean_up_shr;
 
+clean_up_shr:
     BB_free(shr);
+clean_up_shl_fs:
     BB_free(shl_fs);
     return status;
 }
