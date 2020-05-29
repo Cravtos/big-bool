@@ -8,7 +8,7 @@ extern "C" {
 
 // xor(a, b) == and[or(not(a), not(b)), or(a, b)]
 TEST(xor, random_vectors) {
-    size_t tests = 100000;
+    size_t tests = 1000;
 
     time_t seed = time(NULL);
     BB_srandom(seed);

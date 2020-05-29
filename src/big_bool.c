@@ -708,6 +708,7 @@ int BB_shr(BB** r, BB* a, size_t shift)
     // Shift bits and bytes
     size_t byte_shift = shift / 8;
     size_t bit_shift = shift % 8;
+
     size_t last_not_empty_byte = last_accessible_byte - byte_shift;
 
     for (size_t byte = 0; byte < last_not_empty_byte; byte++)
@@ -719,8 +720,11 @@ int BB_shr(BB** r, BB* a, size_t shift)
     }
 
     // Last byte doesn't need any parts of next bytes (obviously), so it's outside the loop.
-    (*r)->vector[last_not_empty_byte] = a->vector[last_not_empty_byte + byte_shift];
-    (*r)->vector[last_not_empty_byte] >>= bit_shift;
+    if (last_not_empty_byte <= (*r)->last_byte + ((*r)->last_bit > 0) - 1)
+    {
+        (*r)->vector[last_not_empty_byte] = a->vector[last_not_empty_byte + byte_shift];
+        (*r)->vector[last_not_empty_byte] >>= bit_shift;
+    }
 
     return status;
 }

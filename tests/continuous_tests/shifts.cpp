@@ -24,8 +24,8 @@ TEST(ror_and_rol, random_vectors) {
         char *before = BB_to_str(a);
         ASSERT_NE(before, nullptr);
 
-        ASSERT_EQ(BB_ror(&a, a, shift), BB_OK);
         ASSERT_EQ(BB_rol(&a, a, shift), BB_OK);
+        ASSERT_EQ(BB_ror(&a, a, shift), BB_OK);
         char *after = BB_to_str(a);
         ASSERT_NE(before, nullptr);
 
