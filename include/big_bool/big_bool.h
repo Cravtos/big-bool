@@ -89,6 +89,7 @@ int BB_zero(BB** r, size_t size);
  *
  *  - Description:
  *  Creates random vector of specified size. Seed is set by BB_srandom.
+ *  Uses C rand() function. Has limited randomness.
  *
  *  - Return value:
  *  BB_OK on success,
@@ -103,7 +104,6 @@ int BB_random(BB** r, size_t size);
  *
  *  - Description:
  *  Makes result vector a copy of other vector.
- *  Uses C rand() function. Has limited randomness.
  *
  *  - Return value:
  *  BB_OK on success,

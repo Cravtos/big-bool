@@ -6,6 +6,7 @@ list(REMOVE_ITEM sources "${PROJECT_SOURCE_DIR}/src/example.c")
 file(GLOB tests "${PROJECT_SOURCE_DIR}/tests/*/*.cpp")
 list(REMOVE_ITEM tests "${PROJECT_SOURCE_DIR}/tests/main.cpp")
 
+
 foreach(file ${tests})
     set(name)
     get_filename_component(name ${file} NAME_WE)
