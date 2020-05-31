@@ -14,12 +14,12 @@ TEST(ror_and_rol, random_vectors) {
     BB_srandom(seed);
     srand(seed);
 
+    BB *a = NULL;
     for (size_t test = 0; test < tests; test++)
     {
         size_t size = rand() % 128 + 1;
         size_t shift = rand() % 256 + 1;
 
-        BB *a = NULL;
         ASSERT_EQ(BB_random(&a, size), BB_OK);
         char *before = BB_to_str(a);
         ASSERT_NE(before, nullptr);
@@ -31,10 +31,10 @@ TEST(ror_and_rol, random_vectors) {
 
         ASSERT_STREQ(before, after);
 
-        BB_free(a);
         free((void *) before);
         free((void *) after);
     }
+    BB_free(a);
 }
 
 // Shift forward and backward
@@ -45,12 +45,12 @@ TEST(shl_and_shr, random_vectors) {
     BB_srandom(seed);
     srand(seed);
 
+    BB *a = NULL;
     for (size_t test = 0; test < tests; test++)
     {
         size_t size = rand() % 128 + 1;
         size_t shift = rand() % 256 + 1;
 
-        BB *a = NULL;
         ASSERT_EQ(BB_random(&a, size), BB_OK);
         const char *before = BB_to_str(a);
         ASSERT_NE(before, nullptr);
@@ -62,8 +62,8 @@ TEST(shl_and_shr, random_vectors) {
 
         ASSERT_STREQ(before, after);
 
-        BB_free(a);
         free((void *) before);
         free((void *) after);
     }
+    BB_free(a);
 }

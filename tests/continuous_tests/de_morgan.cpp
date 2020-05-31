@@ -14,6 +14,11 @@ TEST(de_morgan, random_vectors) {
     BB_srandom(seed);
     srand(seed);
 
+    BB *a = NULL;
+    BB *b = NULL;
+    BB *a_copy = NULL;
+    BB *b_copy = NULL;
+
     for (size_t test = 0; test < tests; test++)
     {
         /*
@@ -22,10 +27,6 @@ TEST(de_morgan, random_vectors) {
          */
         size_t size = rand() % 128 + 1;
 
-        BB *a = NULL;
-        BB *b = NULL;
-        BB *a_copy = NULL;
-        BB *b_copy = NULL;
 
         ASSERT_EQ(BB_random(&a, size), BB_OK);
         ASSERT_EQ(BB_random(&b, size), BB_OK);
@@ -37,7 +38,6 @@ TEST(de_morgan, random_vectors) {
         RecordProperty("FirstVector", first_vec);
         RecordProperty("SecondVector", second_vec);
 #endif
-
 
         ASSERT_EQ(BB_copy(&a_copy, a), BB_OK);
         ASSERT_EQ(BB_copy(&b_copy, b), BB_OK);
@@ -57,10 +57,7 @@ TEST(de_morgan, random_vectors) {
 
         ASSERT_STREQ(first_result, second_result);
 
-        BB_free(a);
-        BB_free(b);
-        BB_free(a_copy);
-        BB_free(b_copy);
+
         free((void *) first_result);
         free((void *) second_result);
 #ifdef XML_OUTPUT
@@ -68,4 +65,9 @@ TEST(de_morgan, random_vectors) {
         free((void *) second_vec);
 #endif
     }
+
+    BB_free(a);
+    BB_free(b);
+    BB_free(a_copy);
+    BB_free(b_copy);
 }
