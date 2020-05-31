@@ -8,7 +8,7 @@ extern "C" {
 
 // xor(a, b) == and[or(not(a), not(b)), or(a, b)]
 TEST(xor, random_vectors) {
-    size_t tests = 1000;
+    size_t tests = 1000000;
 
     time_t seed = time(NULL);
     BB_srandom(seed);
@@ -31,11 +31,14 @@ TEST(xor, random_vectors) {
         ASSERT_EQ(BB_random(&a, size), BB_OK);
         ASSERT_EQ(BB_random(&b, size), BB_OK);
 
-//        // To use RecordProperty specify --gtest-output="xml"
-//        const char *first_vec = BB_to_str(a);
-//        const char *second_vec = BB_to_str(b);
-//        RecordProperty("FirstVector", first_vec);
-//        RecordProperty("SecondVector", second_vec);
+#ifdef XML_OUTPUT
+        // To use RecordProperty specify --gtest-output="xml"
+        const char *first_vec = BB_to_str(a);
+        const char *second_vec = BB_to_str(b);
+        RecordProperty("FirstVector", first_vec);
+        RecordProperty("SecondVector", second_vec);
+#endif
+
 
         ASSERT_EQ(BB_not(&a_not, a), BB_OK);
         ASSERT_EQ(BB_not(&b_not, b), BB_OK);
@@ -57,7 +60,9 @@ TEST(xor, random_vectors) {
         BB_free(ex_or);
         BB_free(a_not);
         BB_free(b_not);
-        free((void *) first_result);
-        free((void *) second_result);
+#ifdef XML_OUTPUT
+        free((void *) first_vec);
+        free((void *) second_vec);
+#endif
     }
 }

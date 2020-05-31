@@ -30,11 +30,14 @@ TEST(de_morgan, random_vectors) {
         ASSERT_EQ(BB_random(&a, size), BB_OK);
         ASSERT_EQ(BB_random(&b, size), BB_OK);
 
-//        // To use RecordProperty specify --gtest-output="xml"
-//        const char *first_vec = BB_to_str(a);
-//        const char *second_vec = BB_to_str(b);
-//        RecordProperty("FirstVector", first_vec);
-//        RecordProperty("SecondVector", second_vec);
+#ifdef XML_OUTPUT
+        // To use RecordProperty specify --gtest-output="xml"
+        const char *first_vec = BB_to_str(a);
+        const char *second_vec = BB_to_str(b);
+        RecordProperty("FirstVector", first_vec);
+        RecordProperty("SecondVector", second_vec);
+#endif
+
 
         ASSERT_EQ(BB_copy(&a_copy, a), BB_OK);
         ASSERT_EQ(BB_copy(&b_copy, b), BB_OK);
@@ -60,7 +63,9 @@ TEST(de_morgan, random_vectors) {
         BB_free(b_copy);
         free((void *) first_result);
         free((void *) second_result);
-//        free((void *) first_vec);
-//        free((void *) second_vec);
+#ifdef XML_OUTPUT
+        free((void *) first_vec);
+        free((void *) second_vec);
+#endif
     }
 }
