@@ -5,30 +5,30 @@
 
 #define RETURN_ON_FAIL() if (status != BB_OK) return status
 
-size_t size_in_bits(BB* r)
+size_t BB_size_in_bits(BB* r)
 {
     return r->last_byte * 8 + r->last_bit;
 }
 
-int BB_resize(BB** r, size_t new_size)
+int BB_resize(BB** r, size_t new_size_in_bits)
 {
     if (r == NULL || (*r) == NULL)
         return BB_NULL_ARG;
 
-    if (new_size == 0)
+    if (new_size_in_bits == 0)
         return BB_EMPTY_VECTOR;
 
-    if (size_in_bits(*r) == new_size)
+    if (BB_size_in_bits(*r) == new_size_in_bits)
         return BB_OK;
 
-    size_t new_last_byte = new_size / 8;
-    size_t new_last_bit = new_size % 8;
+    size_t new_last_byte = new_size_in_bits / 8;
+    size_t new_last_bit = new_size_in_bits % 8;
 
     size_t allocated_bytes = (*r)->last_byte + ((*r)->last_bit > 0);
     size_t new_allocated_bytes = new_last_byte + (new_last_bit > 0);
 
-    (*r)->last_byte = new_size / 8;
-    (*r)->last_bit = new_size % 8;
+    (*r)->last_byte = new_size_in_bits / 8;
+    (*r)->last_bit = new_size_in_bits % 8;
 
     if (allocated_bytes == new_allocated_bytes)
     {
@@ -57,7 +57,7 @@ int BB_from_uint64(BB** r, uint64_t number)
         status = BB_zero(r, sizeof(uint64_t) * 8);
         RETURN_ON_FAIL();
     }
-    else if (size_in_bits(*r) < sizeof(uint64_t) * 8)
+    else if (BB_size_in_bits(*r) < sizeof(uint64_t) * 8)
     {
         status = BB_resize(r, sizeof(uint64_t) * 8);
         RETURN_ON_FAIL();
@@ -85,30 +85,30 @@ void BB_srandom(size_t seed)
 }
 
 // Creates random vector.
-int BB_random(BB** r, size_t size)
+int BB_random(BB** r, size_t size_in_bits)
 {
     int status = BB_OK;
 
     if (r == NULL)
         return BB_NULL_ARG;
 
-    if (size == 0)
+    if (size_in_bits == 0)
         return BB_EMPTY_VECTOR;
 
     if ((*r) == NULL)
     {
-        status = BB_zero(r, size);
+        status = BB_zero(r, size_in_bits);
         RETURN_ON_FAIL();
     }
-    else if (size_in_bits(*r) < size)
+    else if (BB_size_in_bits(*r) < size_in_bits)
     {
-        status = BB_resize(r, size);
+        status = BB_resize(r, size_in_bits);
         RETURN_ON_FAIL();
     }
     else
     {
-        (*r)->last_byte = size / 8;
-        (*r)->last_bit = size % 8;
+        (*r)->last_byte = size_in_bits / 8;
+        (*r)->last_bit = size_in_bits % 8;
     }
 
     size_t last_accessible_byte = (*r)->last_byte + ((*r)->last_bit > 0) - 1;
@@ -121,18 +121,18 @@ int BB_random(BB** r, size_t size)
 }
 
 // Creates vector filled with zeros.
-int BB_zero(BB** r, size_t size)
+int BB_zero(BB** r, size_t size_in_bits)
 {
     int status = BB_OK;
 
     if (r == NULL)
         return BB_NULL_ARG;
 
-    if (size == 0)
+    if (size_in_bits == 0)
         return BB_EMPTY_VECTOR;
 
-    size_t last_byte = size / 8;
-    size_t last_bit = size % 8;
+    size_t last_byte = size_in_bits / 8;
+    size_t last_bit = size_in_bits % 8;
 
     if ((*r) == NULL)
     {
@@ -149,9 +149,9 @@ int BB_zero(BB** r, size_t size)
             return BB_CANT_ALLOCATE;
         }
     }
-    else if (size_in_bits(*r) < size)
+    else if (BB_size_in_bits(*r) < size_in_bits)
     {
-        status = BB_resize(r, size);
+        status = BB_resize(r, size_in_bits);
         RETURN_ON_FAIL();
 
         for (size_t byte = 0; byte < last_byte + (last_bit > 0); byte++)
@@ -160,8 +160,8 @@ int BB_zero(BB** r, size_t size)
         }
     }
 
-    (*r)->last_byte = size / 8;
-    (*r)->last_bit = size % 8;
+    (*r)->last_byte = size_in_bits / 8;
+    (*r)->last_bit = size_in_bits % 8;
 
     return status;
 }
@@ -262,7 +262,7 @@ int BB_from_str(BB** r, const char *str)
         status = BB_zero(r, len);
         RETURN_ON_FAIL();
     }
-    else if (size_in_bits(*r) < len)
+    else if (BB_size_in_bits(*r) < len)
     {
         status = BB_resize(r, len);
         RETURN_ON_FAIL();
@@ -303,14 +303,14 @@ int BB_copy(BB** to, BB* from)
     if ((*to) == from) /* @to and @from is the same pointer */
         return BB_COPY_ITSELF;
 
-    size_t size = size_in_bits(from);
+    size_t size = BB_size_in_bits(from);
 
     if ((*to) == NULL)
     {
         status = BB_zero(to, size);
         RETURN_ON_FAIL();
     }
-    else if (size_in_bits(*to) < size)
+    else if (BB_size_in_bits(*to) < size)
     {
         status = BB_resize(to, size);
         RETURN_ON_FAIL();
@@ -405,7 +405,7 @@ int handle_args(BB** r, BB* a)
 
     int status = BB_OK;
 
-    size_t size = size_in_bits(a);
+    size_t size = BB_size_in_bits(a);
 
     if ((*r) != a)
     {
@@ -414,7 +414,7 @@ int handle_args(BB** r, BB* a)
             status = BB_zero(r, size);
             RETURN_ON_FAIL();
         }
-        else if (size_in_bits(*r) < size)
+        else if (BB_size_in_bits(*r) < size)
         {
             status = BB_resize(r, size);
             RETURN_ON_FAIL();
@@ -459,7 +459,7 @@ int BB_and(BB** r, BB* a, BB* b)
         return BB_NULL_ARG;
 
     // Make first BigBool >= than second
-    if (size_in_bits(a) < size_in_bits(b))
+    if (BB_size_in_bits(a) < BB_size_in_bits(b))
         return BB_and(r, b, a);
 
     int status = BB_OK;
@@ -494,7 +494,7 @@ int BB_or(BB** r, BB* a, BB* b)
         return BB_NULL_ARG;
 
     // Make first BigBool >= than second
-    if (size_in_bits(a) < size_in_bits(b))
+    if (BB_size_in_bits(a) < BB_size_in_bits(b))
         return BB_or(r, b, a);
 
     int status = BB_OK;
@@ -529,7 +529,7 @@ int BB_xor(BB** r, BB* a, BB* b)
         return BB_NULL_ARG;
 
     // Make first BigBool >= than second
-    if (size_in_bits(a) < size_in_bits(b))
+    if (BB_size_in_bits(a) < BB_size_in_bits(b))
         return BB_xor(r, b, a);
 
     int status = BB_OK;
@@ -564,13 +564,13 @@ int BB_shl(BB** r, BB* a, size_t shift)
     if (r == NULL || a == NULL)
         return BB_NULL_ARG;
 
-    size_t new_size = size_in_bits(a) + shift;
+    size_t new_size = BB_size_in_bits(a) + shift;
     if (*r == NULL)
     {
         status = BB_zero(r, new_size);
         RETURN_ON_FAIL();
     }
-    else if (size_in_bits(*r) < new_size)
+    else if (BB_size_in_bits(*r) < new_size)
     {
         status = BB_resize(r, new_size);
         RETURN_ON_FAIL();
@@ -617,7 +617,7 @@ int BB_shl_fs(BB** r, BB* a, size_t shift)
         return BB_NULL_ARG;
 
     // Return empty vector (shift is bigger than vector size)
-    if (shift >= size_in_bits(a))
+    if (shift >= BB_size_in_bits(a))
     {
         if ((*r) != NULL)
         {
@@ -673,7 +673,7 @@ int BB_shr(BB** r, BB* a, size_t shift)
         return BB_NULL_ARG;
 
     // Return empty vector (shift is bigger than vector size)
-    if (shift >= size_in_bits(a))
+    if (shift >= BB_size_in_bits(a))
     {
         if ((*r) != NULL)
         {
@@ -689,16 +689,16 @@ int BB_shr(BB** r, BB* a, size_t shift)
     }
 
     size_t last_accessible_byte = a->last_byte + (a->last_bit > 0) - 1;
-    size_t new_size = size_in_bits(a) - shift;
+    size_t new_size = BB_size_in_bits(a) - shift;
 
     if ((*r) == NULL)
     {
-        status = BB_zero(r, size_in_bits(a) - shift);
+        status = BB_zero(r, BB_size_in_bits(a) - shift);
         RETURN_ON_FAIL();
     }
-    else if (size_in_bits(*r) < new_size)
+    else if (BB_size_in_bits(*r) < new_size)
     {
-        status = BB_resize(r, size_in_bits(a) - shift);
+        status = BB_resize(r, BB_size_in_bits(a) - shift);
         RETURN_ON_FAIL();
     }
 

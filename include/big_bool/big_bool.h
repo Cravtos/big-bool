@@ -83,7 +83,7 @@ int BB_from_uint64(BB** r, uint64_t number);
  *  BB_CANT_ALLOCATE if memory fails to allocate,
  *  BB_resize error codes, [only if (*r != NULL && (length of vector *r) < size)] (See BB_resize).
  */
-int BB_zero(BB** r, size_t size);
+int BB_zero(BB** r, size_t size_in_bits);
 
 /*  int BB_random(BB** r, size_t size);
  *
@@ -98,7 +98,7 @@ int BB_zero(BB** r, size_t size);
  *  BB_zero error codes, [only if *r == NULL] (see BB_zero),
  *  BB_resize error codes, [only if (*r != NULL && (length of vector *r) < size)] (See BB_resize).
  */
-int BB_random(BB** r, size_t size);
+int BB_random(BB** r, size_t size_in_bits);
 
 /*  int BB_copy(BB** to, BB* from);
  *
@@ -178,7 +178,7 @@ int BB_shrink(BB** r);
  */
 char* BB_to_str(BB* a);
 
-/*  int BB_resize(BB** r, size_t new_size);
+/*  int BB_resize(BB** r, size_t new_size_in_bits);
  *
  *  - Description:
  *  Reallocates memory for vector given new size.
@@ -191,7 +191,7 @@ char* BB_to_str(BB* a);
  *  BB_CANT_ALLOCATE if failed to allocate memory for vector,
  *  BB_EMPTY_VECTOR if new_size == 0.
  */
-int BB_resize(BB** r, size_t new_size);
+int BB_resize(BB** r, size_t new_size_in_bits);
 // ------------------------------------------
 
 
