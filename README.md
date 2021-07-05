@@ -1,6 +1,5 @@
 # Big boolean vector library
 ___
-## Written in C, tests use Google Test.
 
 ## Implemented functions:
 ```c
